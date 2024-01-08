@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:18:56 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/07 19:12:34 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/08 13:09:20 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,5 +54,6 @@ int	main(int ac, char **av)
 	mlx_loop(win->mlx);
 	mlx_destroy_window(win->mlx, win->win);
 	mlx_destroy_display(win->mlx);
+	free(win);
 	return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:19:42 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/07 19:24:27 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/08 13:32:18 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,9 @@
 
 # include "MacroLibX/includes/mlx.h"
 # include "libft/libft.h"
+# include <unistd.h>
+# include <fcntl.h>
+# include <stdlib.h>
 
 typedef struct s_window
 {

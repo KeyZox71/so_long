@@ -1,46 +1,37 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_move_character.c                                :+:      :+:    :+:   */
+/*   get_map.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/01/07 19:13:01 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/08 13:24:49 by adjoly           ###   ########.fr       */
+/*   Created: 2024/01/08 13:13:18 by adjoly            #+#    #+#             */
+/*   Updated: 2024/01/08 13:22:56 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "so_long.h"
 
-int	ft_move_up(void *param)
+int	ft_countline_fd(int fd)
 {
-	
+	size_t	line_count;
+	ssize_t	rd;
+
+
+	while ()
+	{
+		
+	}
+
+	return (line_count);
 }
 
-int	ft_move_down(void *param)
+char	**ft_read_map(char	*file_name)
 {
-	
-}
+	char	**map_read;
+	int		fd;
 
-int	ft_move_left(void *param)
-{
-	
-}
+	map_read = ft_countline_fd(fd);
 
-int	ft_move_right(void *param)
-{
-	
-}
-
-int	ft_move_character(int key, void *param)
-{
-	if (key == 26)
-		ft_move_up(param);
-	else if (key == 22)
-		ft_move_down(param);
-	else if (key == 4)
-		ft_move_right(param);
-	else if (key == 7)
-		ft_move_left(param);
-	return (0);
+	return
 }
