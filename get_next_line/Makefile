@@ -6,48 +6,35 @@
 #    By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/01 11:03:22 by adjoly            #+#    #+#              #
-#    Updated: 2024/01/09 15:54:39 by adjoly           ###   ########.fr        #
+#    Updated: 2024/01/08 14:31:46 by adjoly           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME = so_long
+NAME = get_next_line.a
 
-CC = cc
+CC = clang
 
-SRCS = main.c \
-		get_map.c \
-		print_map.c
+SRCS = get_next_line.c \
+		get_next_line_utils.c
 
 OBJS = $(SRCS:.c=.o)
 
-FLAGS = -Werror -Wall -Wextra -g
+FLAGS = -Werror -Wall -Wextra
 
-HEADERS = so_long.h
-
-LIB = MacroLibX/libmlx.so \
-			libft/libft.a \
-			get_next_line/get_next_line.a
-
-MLX_FLAGS = -lSDL2
+HEADER = get_next_line.h
 
 $(NAME): $(OBJS)
-	$(CC) $(FLAGS) $(MLX_FLAGS) $(OBJS) $(LIB) -o $(NAME)
+	ar -rcs	$(NAME) $(OBJS)
 
 %.o: %.c
-	make -C libft
-	make -C get_next_line
-	$(CC) $(FLAGS) -I $(HEADERS) $< -c -o $@
+	$(CC) $(FLAGS) -I $(HEADER) $< -c -o $@
 
 all: $(NAME)
 
 clean:
-	make -C libft clean
-	make -C get_next_line clean
 	rm -f $(OBJS)
 
 fclean: clean
-	make -C libft fclean
-	make -C get_next_line fclean
 	rm -f $(NAME)
 
 re: fclean all
