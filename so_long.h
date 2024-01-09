@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:19:42 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/09 16:09:17 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/09 16:17:27 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,6 @@ int		key_close(int key, void *param);
 int		ft_countline_fd(int fd);
 char	**ft_read_map(char	*file_name);
 
-int		ft_putimg(int x, int y, void *param, char *file_path);
 int		ft_printmap(char **map, void *param);
 
 #endif
