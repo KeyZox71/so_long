@@ -6,12 +6,11 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:18:56 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/09 16:13:17 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/10 15:08:11 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "MacroLibX/includes/mlx.h"
-#include "libft/libft.h"
 #include "so_long.h"
 
 int	key_close(int key, void *param)
@@ -35,6 +34,7 @@ int	win_close(int event, void *param)
 	int			x;
 
 	win = (t_window *)param;
+	ft_move_character(key, void *param)
 	return (0);
 }*/
 
@@ -51,7 +51,7 @@ int	main(int ac, char **av)
 
 	mlx_on_event(win->mlx, win->win, MLX_KEYDOWN, key_close, win->mlx);
 	mlx_on_event(win->mlx, win->win, MLX_WINDOW_EVENT, win_close, win->mlx);
-	// mlx_on_event(win->mlx, win->win, MLX_KEYDOWN, ft_move_character, win->mlx);
+	mlx_on_event(win->mlx, win->win, MLX_KEYDOWN, ft_move_character, win);
 	// mlx_loop_hook(win->mlx, win_update, win);
 	ft_printmap(map, win);
 	mlx_loop(win->mlx);

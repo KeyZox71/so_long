@@ -6,13 +6,13 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/01 17:12:02 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/08 21:48:30 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/10 15:03:07 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-size_t	ft_strlen_gnl(char *s)
+size_t	ft_strl_g(char *s)
 {
 	size_t	i;
 
@@ -32,7 +32,7 @@ char	*ft_strjoin_gnl(char *s1, char *s2)
 	j = 0;
 	if (!s2)
 		return (NULL);
-	result = ft_calloc_gnl((ft_strlen_gnl(s1) + ft_strlen_gnl(s2) + 1), sizeof(char));
+	result = ft_calloc_gnl((ft_strl_g(s1) + ft_strl_g(s2) + 1), sizeof(char));
 	if (result == NULL)
 		return (NULL);
 	while (s1[i])

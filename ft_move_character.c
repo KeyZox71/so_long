@@ -6,30 +6,42 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/07 19:13:01 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/08 13:24:49 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/10 15:10:58 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "so_long.h"
 
-int	ft_move_up(void *param)
+void	ft_move_up(void *param)
 {
-	
+	t_window	*win;
+
+	win = (t_window *)param;
+	ft_putimg(*win->player_x, *win->player_y - 1, win, "assets/player.png");
 }
 
-int	ft_move_down(void *param)
+void	ft_move_down(void *param)
 {
-	
+	t_window	*win;
+
+	win = (t_window *)param;
+	ft_putimg(*win->player_x, *win->player_y + 1, win, "assets/player.png");
 }
 
-int	ft_move_left(void *param)
+void	ft_move_left(void *param)
 {
-	
+	t_window	*win;
+
+	win = (t_window *)param;
+	ft_putimg(*win->player_x - 1, *win->player_y, win, "assets/player.png");
 }
 
-int	ft_move_right(void *param)
+void	ft_move_right(void *param)
 {
-	
+	t_window	*win;
+
+	win = (t_window *)param;
+	ft_putimg(*win->player_x + 1, *win->player_y, win, "assets/player.png");
 }
 
 int	ft_move_character(int key, void *param)

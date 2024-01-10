@@ -6,13 +6,14 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 15:30:06 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/10 10:40:19 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/10 14:57:51 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "MacroLibX/includes/mlx.h"
 #include "libft/libft.h"
 #include "so_long.h"
+#include <stddef.h>
 
 void	ft_putimg(int x, int y, t_window *win, char *file_path)
 {
@@ -21,20 +22,25 @@ void	ft_putimg(int x, int y, t_window *win, char *file_path)
 
 	img_x = 0;
 	img_y = 0;
+	if (file_path[7] == 'p')
+	{
+		win->player_y = ft_calloc(sizeof(int), 1);
+		win->player_y = &y;
+		win->player_x = ft_calloc(sizeof(int), 1);
+		win->player_x = &x;
+	}
 	ft_putstr_fd(file_path, 1);
 	ft_putchar_fd('\n', 1);
 	win->img = mlx_png_file_to_image(win->mlx, file_path, &img_x, &img_y);
 	mlx_put_image_to_window(win->mlx, win->win, win->img, x * img_x, y * img_y);
 }
 
-int	ft_printmap(char **map, void *param)
+void	ft_printmap(char **map, t_window *win)
 {
 	size_t		x;
 	size_t		y;
-	t_window	*win;
 
 	y = 0;
-	win = (t_window *)param;
 	while (map[y])
 	{
 		x = 0;
@@ -48,11 +54,10 @@ int	ft_printmap(char **map, void *param)
 				ft_putimg(x, y, win, "assets/obj.png");
 			else if (map[y][x] == 'E')
 				ft_putimg(x, y, win, "assets/exit.png");
-			else if (map[y][x] == 'P')
+			else if (map[y][x] == 'P')	
 				ft_putimg(x, y, win, "assets/player.png");
 			x++;
 		}
 		y++;
 	}
-	return (0);
 }

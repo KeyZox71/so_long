@@ -6,7 +6,7 @@
 #    By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/01 11:03:22 by adjoly            #+#    #+#              #
-#    Updated: 2024/01/09 15:54:39 by adjoly           ###   ########.fr        #
+#    Updated: 2024/01/10 15:08:43 by adjoly           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,6 +16,7 @@ CC = cc
 
 SRCS = main.c \
 		get_map.c \
+		ft_move_character.c \
 		print_map.c
 
 OBJS = $(SRCS:.c=.o)

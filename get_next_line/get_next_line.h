@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/01 17:12:00 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/08 21:47:06 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/10 15:03:00 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 
 char	*get_next_line(int fd);
 char	*ft_strjoin_gnl(char *s1, char *s2);
-size_t	ft_strlen_gnl(char *s);
+size_t	ft_strl_g(char *s);
 void	*ft_calloc_gnl(size_t nmemb, size_t size);
 
 #endif
