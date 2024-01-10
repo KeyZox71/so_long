@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 15:30:06 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/09 16:52:59 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/10 10:40:19 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ void	ft_putimg(int x, int y, t_window *win, char *file_path)
 {
 	int	img_x;
 	int	img_y;
-	
+
 	img_x = 0;
 	img_y = 0;
 	ft_putstr_fd(file_path, 1);
@@ -48,7 +48,7 @@ int	ft_printmap(char **map, void *param)
 				ft_putimg(x, y, win, "assets/obj.png");
 			else if (map[y][x] == 'E')
 				ft_putimg(x, y, win, "assets/exit.png");
-			else if (map[y][x] == 'P')	
+			else if (map[y][x] == 'P')
 				ft_putimg(x, y, win, "assets/player.png");
 			x++;
 		}
