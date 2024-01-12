@@ -6,28 +6,21 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/04 22:10:52 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/27 21:30:10 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/12/09 17:44:13 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "application.h"
-#include <SDL2/SDL.h>
 #include <renderer/images/texture.h>
 #include <renderer/core/render_core.h>
 #include <array>
 #include <core/errors.h>
-#include <mlx_profile.h>
-#include <core/memory.h>
+#include <core/profile.h>
 
 namespace mlx::core
 {
-	static bool __drop_sdl_responsability = false;
 	Application::Application() : _in(std::make_unique<Input>())
 	{
-		__drop_sdl_responsability = SDL_WasInit(SDL_INIT_VIDEO);
-		if(__drop_sdl_responsability) // is case the mlx is running in a sandbox like MacroUnitTester where SDL is already init
-			return;
-		SDL_SetMemoryFunctions(MemManager::malloc, MemManager::calloc, MemManager::realloc, MemManager::free);
 		if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0)
 			error::report(e_kind::fatal_error, "SDL error : unable to init all subsystems : %s", SDL_GetError());
 	}
@@ -37,12 +30,14 @@ namespace mlx::core
 		while(_in->is_running())
 		{
 			_in->update();
+			for(auto& gs : _graphics)
+				gs->beginRender();
 
 			if(_loop_hook)
 				_loop_hook(_param);
 
 			for(auto& gs : _graphics)
-				gs->render();
+				gs->endRender();
 		}
 	}
 
@@ -64,15 +59,13 @@ namespace mlx::core
 
 	void Application::destroyTexture(void* ptr)
 	{
-		vkDeviceWaitIdle(Render_Core::get().getDevice().get()); // TODO : synchronize with another method than stopping all the GPU process
+		vkDeviceWaitIdle(Render_Core::get().getDevice().get());
 		Texture* texture = static_cast<Texture*>(ptr);
 		texture->destroy();
 	}
 
 	Application::~Application()
 	{
-		if(__drop_sdl_responsability)
-			return;
 		SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
 		SDL_Quit();
 	}

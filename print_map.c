@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 15:30:06 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/10 14:57:51 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/11 18:19:15 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ void	ft_printmap(char **map, t_window *win)
 				ft_putimg(x, y, win, "assets/obj.png");
 			else if (map[y][x] == 'E')
 				ft_putimg(x, y, win, "assets/exit.png");
-			else if (map[y][x] == 'P')	
+			else if (map[y][x] == 'P')
 				ft_putimg(x, y, win, "assets/player.png");
 			x++;
 		}

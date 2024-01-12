@@ -6,18 +6,16 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 19:16:32 by maldavid          #+#    #+#             */
-/*   Updated: 2024/01/03 15:26:08 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/12/08 18:53:36 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef __MLX_RENDER_CORE__
 #define __MLX_RENDER_CORE__
 
-#include <mlx_profile.h>
 #include <volk.h>
 #include <optional>
 
-#include <renderer/command/single_time_cmd_manager.h>
 #include "vk_queues.h"
 #include "vk_device.h"
 #include "vk_instance.h"
@@ -26,13 +24,13 @@
 
 #include <utils/singleton.h>
 #include <core/errors.h>
+#include <core/profile.h>
 
 namespace mlx
 {
 	namespace RCore
 	{
 		std::optional<uint32_t> findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, bool error = true);
-		const char* verbaliseResultVk(VkResult result);
 	}
 
 	#ifdef DEBUG
@@ -58,13 +56,11 @@ namespace mlx
 			inline Queues& getQueue() noexcept { return _queues; }
 			inline GPUallocator& getAllocator() noexcept { return _allocator; }
 			inline ValidationLayers& getLayers() noexcept { return _layers; }
-			inline CmdBuffer& getSingleTimeCmdBuffer() noexcept { return _cmd_manager.getCmdBuffer(); }
 
 			~Render_Core() = default;
 
 		private:
 			ValidationLayers _layers;
-			SingleTimeCmdManager _cmd_manager;
 			Queues _queues;
 			Device _device;
 			Instance _instance;

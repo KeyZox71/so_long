@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/01/25 11:59:07 by maldavid          #+#    #+#             */
-/*   Updated: 2024/01/03 13:16:21 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/11/18 17:21:14 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,6 +167,8 @@ namespace mlx
 		}
 
 		_allocation = Render_Core::get().getAllocator().createImage(&imageInfo, &alloc_info, _image, name);
+
+		_pool.init();
 	}
 
 	void Image::createImageView(VkImageViewType type, VkImageAspectFlags aspectFlags) noexcept
@@ -182,9 +184,8 @@ namespace mlx
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 1;
 
-		VkResult res = vkCreateImageView(Render_Core::get().getDevice().get(), &viewInfo, nullptr, &_image_view);
-		if(res != VK_SUCCESS)
-			core::error::report(e_kind::fatal_error, "Vulkan : failed to create an image view, %s", RCore::verbaliseResultVk(res));
+		if(vkCreateImageView(Render_Core::get().getDevice().get(), &viewInfo, nullptr, &_image_view) != VK_SUCCESS)
+			core::error::report(e_kind::fatal_error, "Vulkan : failed to create an image view");
 	}
 
 	void Image::createSampler() noexcept
@@ -202,18 +203,30 @@ namespace mlx
 		info.anisotropyEnable = VK_FALSE;
 		info.maxAnisotropy = 1.0f;
 
-		VkResult res = vkCreateSampler(Render_Core::get().getDevice().get(), &info, nullptr, &_sampler);
-		if(res != VK_SUCCESS)
-			core::error::report(e_kind::fatal_error, "Vulkan : failed to create an image, %s", RCore::verbaliseResultVk(res));
+		if(vkCreateSampler(Render_Core::get().getDevice().get(), &info, nullptr, &_sampler) != VK_SUCCESS)
+			core::error::report(e_kind::fatal_error, "Vulkan : failed to create an image");
 	}
 
 	void Image::copyFromBuffer(Buffer& buffer)
 	{
-		CmdBuffer& cmd = Render_Core::get().getSingleTimeCmdBuffer();
-		cmd.beginRecord();
+		if(!_transfer_cmd.isInit())
+			_transfer_cmd.init(&_pool);
 
-		VkImageLayout layout_save = _layout;
-		transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &cmd);
+		_transfer_cmd.reset();
+		_transfer_cmd.beginRecord();
+
+		VkImageMemoryBarrier copy_barrier{};
+		copy_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		copy_barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		copy_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		copy_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		copy_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		copy_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		copy_barrier.image = _image;
+		copy_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		copy_barrier.subresourceRange.levelCount = 1;
+		copy_barrier.subresourceRange.layerCount = 1;
+		vkCmdPipelineBarrier(_transfer_cmd.get(), VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &copy_barrier);
 
 		VkBufferImageCopy region{};
 		region.bufferOffset = 0;
@@ -226,21 +239,46 @@ namespace mlx
 		region.imageOffset = { 0, 0, 0 };
 		region.imageExtent = { _width, _height, 1 };
 
-		vkCmdCopyBufferToImage(cmd.get(), buffer.get(), _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		vkCmdCopyBufferToImage(_transfer_cmd.get(), buffer.get(), _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-		transitionLayout(layout_save, &cmd);
+		VkImageMemoryBarrier use_barrier{};
+		use_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		use_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		use_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		use_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		use_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		use_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		use_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		use_barrier.image = _image;
+		use_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		use_barrier.subresourceRange.levelCount = 1;
+		use_barrier.subresourceRange.layerCount = 1;
+		vkCmdPipelineBarrier(_transfer_cmd.get(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &use_barrier);
 
-		cmd.endRecord();
-		cmd.submitIdle();
+		_transfer_cmd.endRecord();
+		_transfer_cmd.submitIdle();
 	}
 
 	void Image::copyToBuffer(Buffer& buffer)
 	{
-		CmdBuffer& cmd = Render_Core::get().getSingleTimeCmdBuffer();
-		cmd.beginRecord();
+		if(!_transfer_cmd.isInit())
+			_transfer_cmd.init(&_pool);
 
-		VkImageLayout layout_save = _layout;
-		transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, &cmd);
+		_transfer_cmd.reset();
+		_transfer_cmd.beginRecord();
+
+		VkImageMemoryBarrier copy_barrier{};
+		copy_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		copy_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		copy_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		copy_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		copy_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		copy_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		copy_barrier.image = _image;
+		copy_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		copy_barrier.subresourceRange.levelCount = 1;
+		copy_barrier.subresourceRange.layerCount = 1;
+		vkCmdPipelineBarrier(_transfer_cmd.get(), VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &copy_barrier);
 
 		VkBufferImageCopy region{};
 		region.bufferOffset = 0;
@@ -253,25 +291,35 @@ namespace mlx
 		region.imageOffset = { 0, 0, 0 };
 		region.imageExtent = { _width, _height, 1 };
 
-		vkCmdCopyImageToBuffer(cmd.get(), _image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer.get(), 1, &region);
+		vkCmdCopyImageToBuffer(_transfer_cmd.get(), _image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer.get(), 1, &region);
 
-		transitionLayout(layout_save, &cmd);
+		VkImageMemoryBarrier use_barrier{};
+		use_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		use_barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		use_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		use_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		use_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		use_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		use_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		use_barrier.image = _image;
+		use_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		use_barrier.subresourceRange.levelCount = 1;
+		use_barrier.subresourceRange.layerCount = 1;
+		vkCmdPipelineBarrier(_transfer_cmd.get(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &use_barrier);
 
-		cmd.endRecord();
-		cmd.submitIdle();
+		_transfer_cmd.endRecord();
+		_transfer_cmd.submitIdle();
 	}
 
-	void Image::transitionLayout(VkImageLayout new_layout, CmdBuffer* cmd)
+	void Image::transitionLayout(VkImageLayout new_layout)
 	{
 		if(new_layout == _layout)
 			return;
 
-		bool singleTime = (cmd == nullptr);
-		if(singleTime)
-		{
-			cmd = &Render_Core::get().getSingleTimeCmdBuffer();
-			cmd->beginRecord();
-		}
+		if(!_transfer_cmd.isInit())
+			_transfer_cmd.init(&_pool);
+		_transfer_cmd.reset();
+		_transfer_cmd.beginRecord();
 
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -306,13 +354,10 @@ namespace mlx
 		else
 			destinationStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-		vkCmdPipelineBarrier(cmd->get(), sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		vkCmdPipelineBarrier(_transfer_cmd.get(), sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-		if(singleTime)
-		{
-			cmd->endRecord();
-			cmd->submitIdle();
-		}
+		_transfer_cmd.endRecord();
+		_transfer_cmd.submitIdle();
 		_layout = new_layout;
 	}
 
@@ -334,6 +379,7 @@ namespace mlx
 	{
 		destroySampler();
 		destroyImageView();
+		destroyCmdPool();
 
 		if(_image != VK_NULL_HANDLE)
 			Render_Core::get().getAllocator().destroyImage(_allocation, _image);

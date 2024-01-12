@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/05 16:30:19 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/11 19:01:14 by kbz_8            ###   ########.fr       */
+/*   Updated: 2023/12/08 12:17:40 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,12 @@
 
 namespace mlx
 {
+	Input::Input()
+	{
+		std::memset(_keys.data(), 0, SDL_NUM_SCANCODES);
+		std::memset(_mouse.data(), 0, 8);
+	}
+
 	void Input::update()
 	{
 		_xRel = 0;
@@ -41,6 +47,7 @@ namespace mlx
 			{
 				case SDL_KEYDOWN:
 				{
+					_keys[_event.key.keysym.scancode] = static_cast<uint8_t>(action::down);
 					if(hooks[MLX_KEYDOWN].hook)
 						hooks[MLX_KEYDOWN].hook(_event.key.keysym.scancode, hooks[MLX_KEYDOWN].param);
 					break;
@@ -48,6 +55,7 @@ namespace mlx
 
 				case SDL_KEYUP:
 				{
+					_keys[_event.key.keysym.scancode] = static_cast<uint8_t>(action::up);
 					if(hooks[MLX_KEYUP].hook)
 						hooks[MLX_KEYUP].hook(_event.key.keysym.scancode, hooks[MLX_KEYUP].param);
 					break;
@@ -55,6 +63,7 @@ namespace mlx
 
 				case SDL_MOUSEBUTTONDOWN:
 				{
+					_mouse[_event.button.button] = static_cast<uint8_t>(action::down);
 					if(hooks[MLX_MOUSEDOWN].hook)
 						hooks[MLX_MOUSEDOWN].hook(_event.button.button, hooks[MLX_MOUSEDOWN].param);
 					break;
@@ -62,6 +71,7 @@ namespace mlx
 
 				case SDL_MOUSEBUTTONUP:
 				{
+					_mouse[_event.button.button] = static_cast<uint8_t>(action::up);
 					if(hooks[MLX_MOUSEUP].hook)
 						hooks[MLX_MOUSEUP].hook(_event.button.button, hooks[MLX_MOUSEUP].param);
 					break;

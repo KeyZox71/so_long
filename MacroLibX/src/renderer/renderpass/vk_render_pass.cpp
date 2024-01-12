@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/06 18:21:36 by maldavid          #+#    #+#             */
-/*   Updated: 2024/01/03 13:17:56 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/11/20 07:24:40 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,13 @@
 #include <renderer/core/render_core.h>
 #include <renderer/renderer.h>
 #include <renderer/renderpass/vk_framebuffer.h>
+#include <vulkan/vulkan_core.h>
 
 namespace mlx
 {
-	static const VkClearValue clearColor = {{{ 0.0f, 0.0f, 0.0f, 1.0f }}}; // wtf, this mess to satisfy a warning
+	static const VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	void RenderPass::init(VkFormat attachement_format, VkImageLayout layout)
+	void RenderPass::init(VkFormat attachement_format)
 	{
 		VkAttachmentDescription colorAttachment{};
 		colorAttachment.format = attachement_format;
@@ -29,50 +30,26 @@ namespace mlx
 		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAttachment.finalLayout = layout;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 		VkAttachmentReference colorAttachmentRef{};
 		colorAttachmentRef.attachment = 0;
-		colorAttachmentRef.layout = (layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : layout);
+		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		VkSubpassDescription subpass1{};
-		subpass1.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass1.colorAttachmentCount = 1;
-		subpass1.pColorAttachments = &colorAttachmentRef;
-
-		VkSubpassDescription subpasses[] = { subpass1 };
-
-		std::vector<VkSubpassDependency> subpassesDeps;
-		subpassesDeps.emplace_back();
-		subpassesDeps.back().srcSubpass = VK_SUBPASS_EXTERNAL;
-		subpassesDeps.back().dstSubpass = 0;
-		subpassesDeps.back().srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		subpassesDeps.back().dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		subpassesDeps.back().srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-		subpassesDeps.back().dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		subpassesDeps.back().dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		subpassesDeps.emplace_back();
-		subpassesDeps.back().srcSubpass = 0;
-		subpassesDeps.back().dstSubpass = VK_SUBPASS_EXTERNAL;
-		subpassesDeps.back().srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		subpassesDeps.back().dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		subpassesDeps.back().srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		subpassesDeps.back().dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-		subpassesDeps.back().dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+		VkSubpassDescription subpass{};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorAttachmentRef;
 
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		renderPassInfo.attachmentCount = 1;
 		renderPassInfo.pAttachments = &colorAttachment;
-		renderPassInfo.subpassCount = sizeof(subpasses) / sizeof(VkSubpassDescription);
-		renderPassInfo.pSubpasses = subpasses;
-		renderPassInfo.dependencyCount = static_cast<uint32_t>(subpassesDeps.size());
-		renderPassInfo.pDependencies = subpassesDeps.data();
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
 
-		VkResult res = vkCreateRenderPass(Render_Core::get().getDevice().get(), &renderPassInfo, nullptr, &_renderPass);
-		if(res != VK_SUCCESS)
-			core::error::report(e_kind::fatal_error, "Vulkan : failed to create render pass, %s", RCore::verbaliseResultVk(res));
+		if(vkCreateRenderPass(Render_Core::get().getDevice().get(), &renderPassInfo, nullptr, &_renderPass) != VK_SUCCESS)
+			core::error::report(e_kind::fatal_error, "Vulkan : failed to create render pass");
 		#ifdef DEBUG
 			core::error::report(e_kind::message, "Vulkan : created new render pass");
 		#endif
@@ -101,6 +78,7 @@ namespace mlx
 	{
 		if(!_is_running)
 			return;
+
 		vkCmdEndRenderPass(cmd.get());
 		_is_running = false;
 	}

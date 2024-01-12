@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/06 18:27:38 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/12 22:46:21 by kbz_8            ###   ########.fr       */
+/*   Updated: 2023/12/08 19:06:45 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,22 +15,14 @@
 
 #include "vk_buffer.h"
 #include <renderer/renderer.h>
-#include <mlx_profile.h>
+#include <core/profile.h>
 
 namespace mlx
 {
 	class VBO : public Buffer
 	{
 		public:
-			inline void create(uint32_t size, const void* data, const char* name) { Buffer::create(Buffer::kind::dynamic, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, name, data); }
-			void setData(uint32_t size, const void* data);
-			inline void bind(Renderer& renderer) noexcept { vkCmdBindVertexBuffers(renderer.getActiveCmdBuffer().get(), 0, 1, &_buffer, &_offset); }
-	};
-
-	class D_VBO : public Buffer
-	{
-		public:
-			inline void create(uint32_t size, const void* data, const char* name) { Buffer::create(Buffer::kind::dynamic_device_local, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, name, data); }
+			inline void create(uint32_t size, const char* name) { Buffer::create(Buffer::kind::dynamic, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, name); }
 			void setData(uint32_t size, const void* data);
 			inline void bind(Renderer& renderer) noexcept { vkCmdBindVertexBuffers(renderer.getActiveCmdBuffer().get(), 0, 1, &_buffer, &_offset); }
 	};

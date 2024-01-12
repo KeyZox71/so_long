@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/08 02:24:58 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/23 18:49:12 by kbz_8            ###   ########.fr       */
+/*   Updated: 2023/12/08 19:10:09 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,7 @@
 #include <renderer/descriptors/vk_descriptor_set.h>
 #include <renderer/buffers/vk_ibo.h>
 #include <renderer/buffers/vk_vbo.h>
-#include <mlx_profile.h>
-#include <string>
+#include <core/profile.h>
 
 namespace mlx
 {
@@ -40,7 +39,7 @@ namespace mlx
 
 			inline void setDescriptor(DescriptorSet set) noexcept { _set = std::move(set); }
 			inline VkDescriptorSet getSet() noexcept { return _set.isInit() ? _set.get() : VK_NULL_HANDLE; }
-			inline void updateSet(int binding) noexcept { _set.writeDescriptor(binding, *this); _has_been_updated = true; }
+			inline void updateSet(int binding) noexcept { _set.writeDescriptor(binding, getImageView(), getSampler()); _has_been_updated = true; }
 			inline bool hasBeenUpdated() const noexcept { return _has_been_updated; }
 			inline constexpr void resetUpdate() noexcept { _has_been_updated = false; }
 
@@ -68,11 +67,24 @@ namespace mlx
 	struct TextureRenderData
 	{
 		Texture* texture;
+		std::size_t hash = 0;
 		int x;
 		int y;
 
 		TextureRenderData(Texture* _texture, int _x, int _y) : texture(_texture), x(_x), y(_y) {}
 		bool operator==(const TextureRenderData& rhs) const { return texture == rhs.texture && x == rhs.x && y == rhs.y; }
+	};
+}
+
+namespace std
+{
+	template <>
+	struct hash<mlx::TextureRenderData>
+	{
+		size_t operator()(const mlx::TextureRenderData& td) const noexcept
+		{
+			return std::hash<mlx::Texture*>()(td.texture) + std::hash<int>()(td.x) + std::hash<int>()(td.y);
+		}
 	};
 }
 

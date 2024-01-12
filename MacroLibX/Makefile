@@ -6,13 +6,14 @@
 #    By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/10/04 16:43:41 by maldavid          #+#    #+#              #
-#    Updated: 2023/12/31 01:09:30 by maldavid         ###   ########.fr        #
+#    Updated: 2023/12/07 15:25:52 by kbz_8            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME		= libmlx.so
 
 SRCS		=  $(wildcard $(addsuffix /*.cpp, ./src/core))
+SRCS		+= $(wildcard $(addsuffix /*.cpp, ./src/core/**))
 SRCS		+= $(wildcard $(addsuffix /*.cpp, ./src/platform))
 SRCS		+= $(wildcard $(addsuffix /*.cpp, ./src/renderer))
 SRCS		+= $(wildcard $(addsuffix /*.cpp, ./src/renderer/**))
@@ -31,22 +32,17 @@ MODE	= "release"
 
 CXX		= clang++
 
-CXXFLAGS	= -std=c++17 -O3 -fPIC -Wall -Wextra -Werror -DSDL_MAIN_HANDLED
+ifeq ($(TOOLCHAIN), gcc)
+	CXX = g++
+endif
+
+CXXFLAGS	= -std=c++17 -O3 -fPIC
 INCLUDES	= -I./includes -I./src -I./third_party
 
 LDLIBS =
 
-ifeq ($(TOOLCHAIN), gcc)
-	CXX = g++
-	CXXFLAGS += -Wno-error=cpp
-else
-	CXXFLAGS += -Wno-error=#warning
-endif
-
 ifeq ($(OS), Darwin)
-	LDLIBS += -L /opt/homebrew/lib -lSDL2
-	CXXFLAGS += -I /opt/homebrew/include
-	NAME = libmlx.dylib
+	LDLIBS += -lSDL2
 endif
 
 ifeq ($(DEBUG), true)

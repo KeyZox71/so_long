@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/06 16:24:11 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/14 17:39:51 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/12/08 19:12:40 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,7 @@
 #include <cstdint>
 #include <unordered_set>
 #include <renderer/text_library.h>
-#include <mlx_profile.h>
-#include <utils/combine_hash.h>
+#include <core/profile.h>
 
 namespace mlx
 {
@@ -34,9 +33,8 @@ namespace mlx
 		std::string text;
 
 		TextDrawData(std::string text, int _color, int _x, int _y);
-		void init(TextLibrary& library, Font* const font) noexcept;
+		void init(TextLibrary& library, std::array<stbtt_packedchar, 96>& cdata) noexcept;
 		bool operator==(const TextDrawData& rhs) const { return text == rhs.text && x == rhs.x && y == rhs.y && color == rhs.color; }
-		TextDrawData() = default;
 	};
 }
 
@@ -47,9 +45,7 @@ namespace std
 	{
 		std::size_t operator()(const mlx::TextDrawData& d) const noexcept
 		{
-			std::size_t hash = 0;
-			mlx::hashCombine(hash, d.text, d.x, d.y, d.color);
-			return hash;
+			return std::hash<std::string>()(d.text) + std::hash<int>()(d.x) + std::hash<int>()(d.y) + std::hash<int>()(d.color);
 		}
 	};
 }
@@ -63,19 +59,20 @@ namespace mlx
 
 			void init(Renderer* renderer) noexcept;
 			void put(int x, int y, int color, std::string str);
-			inline void clear() { _drawlist.clear(); _library.clearLibrary(); }
+			inline VkDescriptorSet getDescriptorSet() noexcept { return _atlas.getSet(); }
+			inline void clear() { _drawlist.clear(); }
 			void loadFont(const std::filesystem::path& filepath, float scale);
-			void render(std::array<VkDescriptorSet, 2>& sets);
+			void render();
 			void destroy() noexcept;
 
 			~TextPutPipeline() = default;
 
 		private:
-			std::unordered_set<Font> _font_set;
+			std::array<stbtt_packedchar, 96> _cdata;
+			TextureAtlas _atlas;
 			TextLibrary _library;
 			std::unordered_set<TextDrawData> _drawlist;
 			Renderer* _renderer = nullptr;
-			Font* _font_in_use = nullptr;
 	};
 }
 

@@ -6,22 +6,22 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/06 18:22:00 by maldavid          #+#    #+#             */
-/*   Updated: 2024/01/03 15:28:25 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/12/08 19:11:14 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef __MLX_VK_RENDER_PASS__
 #define __MLX_VK_RENDER_PASS__
 
-#include <mlx_profile.h>
 #include <volk.h>
+#include <core/profile.h>
 
 namespace mlx
 {
 	class RenderPass
 	{
 		public:
-			void init(VkFormat attachement_format, VkImageLayout layout);
+			void init(VkFormat attachement_format);
 			void destroy() noexcept;
 
 			void begin(class CmdBuffer& cmd, class FrameBuffer& fb);

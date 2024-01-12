@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/31 15:14:50 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/23 19:34:30 by kbz_8            ###   ########.fr       */
+/*   Updated: 2023/11/16 13:44:58 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,14 +22,14 @@ namespace mlx
 
 		_buffer.create(Buffer::kind::dynamic, sizeof(uint32_t) * (width * height), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, "__mlx_pixel_put_pipeline_texture");
 		_buffer.mapMem(&_buffer_map);
-		_cpu_map = std::vector<uint32_t>(height * width + 1, 0);
+		_cpu_map = std::vector<uint32_t>(height * width, 0);
 		_width = width;
 		_height = height;
 	}
 
-	void PixelPutPipeline::setPixel(int x, int y, uint32_t color) noexcept
+	void PixelPutPipeline::setPixel(uint32_t x, uint32_t y, uint32_t color) noexcept
 	{
-		if(x < 0 || y < 0 || x > static_cast<int>(_width) || y > static_cast<int>(_height))
+		if(x < 0 || y < 0 || x > _width || y > _height)
 			return;
 		_cpu_map[(y * _width) + x] = color;
 		_has_been_modified = true;
@@ -56,7 +56,7 @@ namespace mlx
 	{
 		_texture.render(renderer, 0, 0);
 	}
-
+	
 	void PixelPutPipeline::destroy() noexcept
 	{
 		_buffer.destroy();

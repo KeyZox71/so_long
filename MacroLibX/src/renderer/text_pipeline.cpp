@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/06 16:41:13 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/14 17:49:37 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/12/07 22:29:45 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,8 @@
 #include <core/memory.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#define STB_malloc(x, u) ((void)(u), MemManager::malloc(x))
-#define STB_free(x, u) ((void)(u), MemManager::free(x))
+#define STB_malloc(x, u) ((void)(u), MemManager::get().alloc(x))
+#define STB_free(x, u) ((void)(u), MemManager::get().free(x))
 #include <stb_truetype.h>
 
 constexpr const int RANGE = 1024;
@@ -36,7 +36,7 @@ namespace mlx
 		text(std::move(_text))
 	{}
 
-	void TextDrawData::init(TextLibrary& library, Font* const font) noexcept
+	void TextDrawData::init(TextLibrary& library, std::array<stbtt_packedchar, 96>& cdata) noexcept
 	{
 		std::vector<Vertex> vertexData;
 		std::vector<uint16_t> indexData;
@@ -46,11 +46,11 @@ namespace mlx
 
 		for(char c : text)
 		{
-			if(c < 32)
+			if(c < 32 || c > 127)
 				continue;
 
 			stbtt_aligned_quad q;
-			stbtt_GetPackedQuad(font->getCharData().data(), RANGE, RANGE, c - 32, &stb_x, &stb_y, &q, 1);
+			stbtt_GetPackedQuad(cdata.data(), RANGE, RANGE, c - 32, &stb_x, &stb_y, &q, 1);
 
 			std::size_t index = vertexData.size();
 
@@ -67,7 +67,7 @@ namespace mlx
 			indexData.emplace_back(index + 0);
 		}
 		std::shared_ptr<TextData> text_data = std::make_shared<TextData>();
-		text_data->init(text, font, std::move(vertexData), std::move(indexData));
+		text_data->init(text, std::move(vertexData), std::move(indexData));
 		id = library.addTextToLibrary(text_data);
 
 		#ifdef DEBUG
@@ -78,44 +78,71 @@ namespace mlx
 	void TextPutPipeline::init(Renderer* renderer) noexcept
 	{
 		_renderer = renderer;
-		_font_in_use = &const_cast<Font&>(*_font_set.emplace(*_renderer, "default", dogica_ttf, 6.0f).first);
+		std::vector<uint8_t> tmp_bitmap(RANGE * RANGE);
+		std::vector<uint8_t> vulkan_bitmap(RANGE * RANGE * 4);
+		stbtt_pack_context pc;
+		stbtt_PackBegin(&pc, tmp_bitmap.data(), RANGE, RANGE, RANGE, 1, nullptr);
+		stbtt_PackFontRange(&pc, dogica_ttf, 0, 6.0, 32, 96, _cdata.data());
+		stbtt_PackEnd(&pc);
+		for(int i = 0, j = 0; i < RANGE * RANGE; i++, j += 4)
+		{
+			vulkan_bitmap[j + 0] = tmp_bitmap[i];
+			vulkan_bitmap[j + 1] = tmp_bitmap[i];
+			vulkan_bitmap[j + 2] = tmp_bitmap[i];
+			vulkan_bitmap[j + 3] = tmp_bitmap[i];
+		}
+		_atlas.create(vulkan_bitmap.data(), RANGE, RANGE, VK_FORMAT_R8G8B8A8_UNORM, "__mlx_texts_pipeline_texture_atlas", true);
+		_atlas.setDescriptor(renderer->getFragDescriptorSet().duplicate());
 	}
 
 	void TextPutPipeline::loadFont(const std::filesystem::path& filepath, float scale)
 	{
-		if(filepath.string() == "default") // we're sure it is already loaded
-			_font_in_use = &const_cast<Font&>(*_font_set.emplace(*_renderer, "default", dogica_ttf, scale).first);
-		else
-			_font_in_use = &const_cast<Font&>(*_font_set.emplace(*_renderer, filepath, scale).first);
+		std::vector<uint8_t> tmp_bitmap(RANGE * RANGE);
+		std::vector<uint8_t> vulkan_bitmap(RANGE * RANGE * 4);
+
+		std::ifstream file(filepath, std::ios::binary);
+		if(!file.is_open())
+		{
+			core::error::report(e_kind::error, "Font load : cannot open font file, %s", filepath.string().c_str());
+			return;
+		}
+		std::ifstream::pos_type fileSize = std::filesystem::file_size(filepath);
+		file.seekg(0, std::ios::beg);
+		std::vector<uint8_t> bytes(fileSize);
+		file.read(reinterpret_cast<char*>(bytes.data()), fileSize);
+		file.close();
+
+		stbtt_pack_context pc;
+		stbtt_PackBegin(&pc, tmp_bitmap.data(), RANGE, RANGE, RANGE, 1, nullptr);
+		stbtt_PackFontRange(&pc, bytes.data(), 0, scale, 32, 96, _cdata.data());
+		stbtt_PackEnd(&pc);
+		for(int i = 0, j = 0; i < RANGE * RANGE; i++, j += 4)
+		{
+			vulkan_bitmap[j + 0] = tmp_bitmap[i];
+			vulkan_bitmap[j + 1] = tmp_bitmap[i];
+			vulkan_bitmap[j + 2] = tmp_bitmap[i];
+			vulkan_bitmap[j + 3] = tmp_bitmap[i];
+		}
+		destroy();
+		_atlas.create(vulkan_bitmap.data(), RANGE, RANGE, VK_FORMAT_R8G8B8A8_UNORM, "__mlx_texts_pipeline_texture_atlas", true);
+		_atlas.setDescriptor(_renderer->getFragDescriptorSet().duplicate());
 	}
 
 	void TextPutPipeline::put(int x, int y, int color, std::string str)
 	{
 		auto res = _drawlist.emplace(std::move(str), color, x, y);
 		if(res.second)
-			const_cast<TextDrawData&>(*res.first).init(_library, _font_in_use);
-		else
-		{
-			auto text_ptr = _library.getTextData(res.first->id);
-			if(*_font_in_use != text_ptr->getFontInUse())
-			{
-				_library.removeTextFromLibrary(res.first->id);
-				const_cast<TextDrawData&>(*res.first).init(_library, _font_in_use);
-			}
-		}
+			const_cast<TextDrawData&>(*res.first).init(_library, _cdata);
 	}
 
-	void TextPutPipeline::render(std::array<VkDescriptorSet, 2>& sets)
+	void TextPutPipeline::render()
 	{
+		_atlas.updateSet(0);
 		for(auto& draw : _drawlist)
 		{
 			std::shared_ptr<TextData> draw_data = _library.getTextData(draw.id);
-			const TextureAtlas& atlas = draw_data->getFontInUse().getAtlas();
 			draw_data->bind(*_renderer);
-			atlas.updateSet(0);
-			sets[1] = const_cast<TextureAtlas&>(atlas).getSet();
-			vkCmdBindDescriptorSets(_renderer->getActiveCmdBuffer().get(), VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->getPipeline().getPipelineLayout(), 0, sets.size(), sets.data(), 0, nullptr);
-			atlas.render(*_renderer, draw.x, draw.y, draw_data->getIBOsize());
+			_atlas.render(*_renderer, draw.x, draw.y, draw_data->getIBOsize());
 		}
 	}
 
@@ -123,6 +150,6 @@ namespace mlx
 	{
 		_library.clearLibrary();
 		_drawlist.clear();
-		_font_set.clear();
+		_atlas.destroy();
 	}
 }

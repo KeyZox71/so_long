@@ -6,16 +6,28 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/04 16:56:35 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/27 17:19:50 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/12/08 18:07:40 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// MacroLibX official repo https://github.com/seekrs/MacroLibX
+// MacroLibX official repo https://github.com/420verfl0w/MacroLibX
 
 #ifndef __MACRO_LIB_X_H__
 #define __MACRO_LIB_X_H__
 
-#include "mlx_profile.h"
+#if defined(_WIN32) || defined(_WIN64)
+	#define MLX_EXPORT __declspec(dllexport)
+	#define MLX_IMPORT __declspec(dllimport)
+#else
+	#define MLX_EXPORT
+	#define MLX_IMPORT
+#endif
+
+#ifdef MLX_BUILD
+	#define MLX_API MLX_EXPORT
+#else
+	#define MLX_API MLX_IMPORT
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,14 +43,12 @@ typedef enum
 	MLX_WINDOW_EVENT = 5
 } mlx_event_type;
 
-
 /**
  * @brief			Initializes the MLX internal application
  *
  * @return (void*)	An opaque pointer to the internal MLX application or NULL (0x0) in case of error
  */
 MLX_API void* mlx_init();
-
 
 /**
  * @brief			Creates a new window
@@ -52,7 +62,6 @@ MLX_API void* mlx_init();
  */
 MLX_API void* mlx_new_window(void* mlx, int w, int h, const char* title);
 
-
 /**
  * @brief			Gives a function to be executed at each loop turn
  *
@@ -62,8 +71,8 @@ MLX_API void* mlx_new_window(void* mlx, int w, int h, const char* title);
  *
  * @return (int)	Always return 0, made this to copy the behaviour of the original MLX
  */
-MLX_API int mlx_loop_hook(void* mlx, int (*f)(void*), void* param);
 
+MLX_API int mlx_loop_hook(void* mlx, int (*f)(void*), void* param);
 
 /**
  * @brief			Starts the internal main loop
@@ -74,7 +83,6 @@ MLX_API int mlx_loop_hook(void* mlx, int (*f)(void*), void* param);
  */
 MLX_API int mlx_loop(void* mlx);
 
-
 /**
  * @brief			Ends the internal main loop
  *
@@ -84,7 +92,6 @@ MLX_API int mlx_loop(void* mlx);
  */
 MLX_API int mlx_loop_end(void* mlx);
 
-
 /**
  * @brief			Shows mouse cursor
  *
@@ -92,14 +99,12 @@ MLX_API int mlx_loop_end(void* mlx);
  */
 MLX_API int mlx_mouse_show();
 
-
 /**
  * @brief			Hides mouse cursor
  *
  * @return (int)	Always return 0, made this to copy the behaviour of the original MLX
  */
 MLX_API int mlx_mouse_hide();
-
 
 /**
  * @brief			Moves cursor to givent position
@@ -112,7 +117,6 @@ MLX_API int mlx_mouse_hide();
  * @return (int)	Always return 0, made this to copy the behaviour of the original MLX
  */
 MLX_API int mlx_mouse_move(void* mlx, void* win, int x, int y);
-
 
 /**
  * @brief			Get cursor's position
@@ -168,7 +172,6 @@ MLX_API int mlx_pixel_put(void* mlx, void* win, int x, int y, int color);
  */
 MLX_API void* mlx_new_image(void* mlx, int width, int height);
 
-
 /**
  * @brief					Get image pixel data
  *
@@ -182,13 +185,12 @@ MLX_API void* mlx_new_image(void* mlx, int width, int height);
  * /!\ If you run into glitches when writing or reading pixels from images /!\
  * You need to add IMAGES_OPTIMIZED=false to your make mlx command
  * ```
- * 	~ git clone https://github.com/seekrs/MacroLibX.git
+ * 	~ git clone https://github.com/420verfl0w/MacroLibX.git
  * 	~ cd MacroLibX
  * 	~ make IMAGES_OPTIMIZED=false
  * ```
  */
 MLX_API int mlx_get_image_pixel(void* mlx, void* img, int x, int y);
-
 
 /**
  * @brief					Set image pixel data
@@ -204,13 +206,12 @@ MLX_API int mlx_get_image_pixel(void* mlx, void* img, int x, int y);
  * /!\ If you run into glitches when writing or reading pixels from images /!\
  * You need to add IMAGES_OPTIMIZED=false to your make mlx command
  * ```
- * 	~ git clone https://github.com/seekrs/MacroLibX.git
+ * 	~ git clone https://github.com/420verfl0w/MacroLibX.git
  * 	~ cd MacroLibX
  * 	~ make IMAGES_OPTIMIZED=false
  * ```
  */
 MLX_API void mlx_set_image_pixel(void* mlx, void* img, int x, int y, int color);
-
 
 /**
  * @brief			Put image to the given window
@@ -224,7 +225,6 @@ MLX_API void mlx_set_image_pixel(void* mlx, void* img, int x, int y, int color);
  * @return (int)	Always return 0, made this to copy the behaviour of the original MLX
  */
 MLX_API int mlx_put_image_to_window(void* mlx, void* win, void* img, int x, int y);
-
 
 /**
  * @brief			Destroys internal image
@@ -249,7 +249,6 @@ MLX_API int mlx_destroy_image(void* mlx, void* img);
  */
 MLX_API void* mlx_png_file_to_image(void* mlx, char* filename, int* width, int* height);
 
-
 /**
  * @brief			Create a new image from a jpg file
  *
@@ -261,7 +260,6 @@ MLX_API void* mlx_png_file_to_image(void* mlx, char* filename, int* width, int* 
  * @return (void*)	An opaque pointer to the internal image or NULL (0x0) in case of error
  */
 MLX_API void* mlx_jpg_file_to_image(void* mlx, char* filename, int* width, int* height);
-
 
 /**
  * @brief			Create a new image from a bmp file
@@ -296,19 +294,18 @@ MLX_API int mlx_string_put(void* mlx, void* win, int x, int y, int color, char* 
  *
  * @param mlx		Internal MLX application
  * @param win		Internal window
- * @param filepath	Filepath to the font or "default" to reset to the embedded font
+ * @param filepath	Filepath to the font
  *
  * @return (void)	
  */
 MLX_API void mlx_set_font(void* mlx, void* win, char* filepath);
-
 
 /**
  * @brief			Loads a font to be used by `mlx_string_put` and scales it
  *
  * @param mlx		Internal MLX application
  * @param win		Internal window
- * @param filepath	Filepath to the font or "default" to reset to the embedded font
+ * @param filepath	Filepath to the font
  * @param scale		Scale to apply to the font
  *
  * @return (void)	

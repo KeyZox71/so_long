@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "renderer/images/texture.h"
 #include <core/graphics.h>
 #include <type_traits>
 
@@ -17,6 +18,14 @@ namespace mlx
 {
 	int& GraphicsSupport::getID() noexcept { return _id; }
 	std::shared_ptr<MLX_Window> GraphicsSupport::getWindow() { return _window; }
+
+	void GraphicsSupport::beginRender() noexcept
+	{
+		if(!_renderer->beginFrame())
+			return;
+		_proj = glm::ortho<float>(0, _window->getWidth(), 0, _window->getHeight());
+		_renderer->getUniformBuffer()->setData(sizeof(_proj), &_proj);
+	}
 
 	void GraphicsSupport::clearRenderData() noexcept
 	{
@@ -38,7 +47,14 @@ namespace mlx
 	void GraphicsSupport::texturePut(Texture* texture, int x, int y)
 	{
 		_textures_to_render.emplace_back(texture, x, y);
-		auto it = std::find(_textures_to_render.begin(), _textures_to_render.end() - 1, _textures_to_render.back());
+		std::size_t hash = std::hash<TextureRenderData>{}(_textures_to_render.back());
+		_textures_to_render.back().hash = hash;
+
+		auto it = std::find_if(_textures_to_render.begin(), _textures_to_render.end() - 1, [=](const TextureRenderData& rhs)
+		{
+			return rhs.hash == hash;
+		});
+
 		if(it != _textures_to_render.end() - 1)
 			_textures_to_render.erase(it);
 	}

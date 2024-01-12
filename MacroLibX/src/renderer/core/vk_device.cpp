@@ -6,12 +6,11 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 19:14:29 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/30 23:29:41 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/11/18 17:22:02 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "render_core.h"
-#include <iterator>
 #include <vector>
 #include <set>
 #include <SDL2/SDL.h>
@@ -57,9 +56,8 @@ namespace mlx
 		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		createInfo.enabledLayerCount = 0;
 
-		VkResult res;
-		if((res = vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device)) != VK_SUCCESS)
-			core::error::report(e_kind::fatal_error, "Vulkan : failed to create logcal device, %s", RCore::verbaliseResultVk(res));
+		if(vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device) != VK_SUCCESS)
+			core::error::report(e_kind::fatal_error, "Vulkan : failed to create logcal device");
 		#ifdef DEBUG
 			core::error::report(e_kind::message, "Vulkan : created new logical device");
 		#endif
@@ -86,10 +84,8 @@ namespace mlx
 
 		std::vector<std::pair<int, VkPhysicalDevice>> devices_score;
 
-		std::transform(devices.cbegin(), devices.cend(), std::back_inserter(devices_score), [&](VkPhysicalDevice device)
-		{
-			return std::make_pair(deviceScore(device, surface), device);
-		});
+		for(const auto& device : devices)
+			devices_score.emplace_back(deviceScore(device, surface), device);
 
 		vkDestroySurfaceKHR(Render_Core::get().getInstance().get(), surface, nullptr);
 		SDL_DestroyWindow(window);

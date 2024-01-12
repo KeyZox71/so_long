@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 11:52:30 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/12 23:07:13 by kbz_8            ###   ########.fr       */
+/*   Updated: 2023/12/08 19:12:24 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,9 +20,7 @@
 #include <memory>
 #include <vector>
 #include <cstdint>
-#include <mlx_profile.h>
-#include <renderer/font.h>
-#include <renderer/core/render_core.h>
+#include <core/profile.h>
 
 namespace mlx
 {
@@ -34,10 +32,8 @@ namespace mlx
 		public:
 			TextData() = default;
 
-			void init(std::string text, Font const* font, std::vector<Vertex> vbo_data, std::vector<uint16_t> ibo_data);
+			void init(std::string text, std::vector<Vertex> vbo_data, std::vector<uint16_t> ibo_data);
 			void bind(class Renderer& renderer) noexcept;
-			inline const Font& getFontInUse() const noexcept { return *_font; }
-			void updateVertexData(int frame, std::vector<Vertex> vbo_data);
 			inline uint32_t getIBOsize() noexcept { return _ibo.getSize(); }
 			inline const std::string& getText() const { return _text; }
 			void destroy() noexcept;
@@ -45,10 +41,9 @@ namespace mlx
 			~TextData() = default;
 
 		private:
-			std::array<D_VBO, MAX_FRAMES_IN_FLIGHT> _vbo;
+			C_VBO _vbo;
 			C_IBO _ibo;
 			std::string _text;
-			Font const* _font = nullptr;
 	};
 
 	class TextLibrary

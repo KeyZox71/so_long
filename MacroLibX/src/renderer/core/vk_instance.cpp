@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 19:04:21 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/31 00:40:10 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/11/18 17:21:42 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,19 +21,19 @@ namespace mlx
 	{
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		appInfo.pApplicationName = "MacroLibX";
+		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "MacroLibX";
-		appInfo.engineVersion = VK_MAKE_VERSION(1, 2, 1);
+		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.apiVersion = VK_API_VERSION_1_2;
-
-		auto extensions = getRequiredExtensions();
 
 		VkInstanceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		createInfo.pApplicationInfo = &appInfo;
+
+		auto extensions = getRequiredExtensions();
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 		createInfo.ppEnabledExtensionNames = extensions.data();
-		createInfo.enabledLayerCount = 0; // will be replaced if validation layers are enabled
-		createInfo.pNext = nullptr;
 
 		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 		if constexpr(enableValidationLayers)
@@ -43,13 +43,18 @@ namespace mlx
 				createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 				createInfo.ppEnabledLayerNames = validationLayers.data();
 				Render_Core::get().getLayers().populateDebugMessengerCreateInfo(debugCreateInfo);
-				createInfo.pNext = static_cast<VkDebugUtilsMessengerCreateInfoEXT*>(&debugCreateInfo);
+				createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugCreateInfo;
 			}
+		}
+		else
+		{
+			createInfo.enabledLayerCount = 0;
+			createInfo.pNext = nullptr;
 		}
 
 		VkResult res;
 		if((res = vkCreateInstance(&createInfo, nullptr, &_instance)) != VK_SUCCESS)
-			core::error::report(e_kind::fatal_error, "Vulkan : failed to create Vulkan instance, %s", RCore::verbaliseResultVk(res));
+			core::error::report(e_kind::fatal_error, "Vulkan : failed to create Vulkan instance");
 		volkLoadInstance(_instance);
 		#ifdef DEBUG
 			core::error::report(e_kind::message, "Vulkan : created new instance");

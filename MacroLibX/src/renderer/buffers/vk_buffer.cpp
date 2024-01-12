@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 18:55:57 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/16 17:10:17 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/11/16 13:54:25 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,9 +23,9 @@ namespace mlx
 	void Buffer::create(Buffer::kind type, VkDeviceSize size, VkBufferUsageFlags usage, const char* name, const void* data)
 	{
 		_usage = usage;
-		if(type == Buffer::kind::constant || type == Buffer::kind::dynamic_device_local)
+		if(type == Buffer::kind::constant)
 		{
-			if(data == nullptr && type == Buffer::kind::constant)
+			if(data == nullptr)
 			{
 				core::error::report(e_kind::warning, "Vulkan : trying to create constant buffer without data (constant buffers cannot be modified after creation)");
 				return;
@@ -45,7 +45,7 @@ namespace mlx
 			mapMem(&mapped);
 				std::memcpy(mapped, data, size);
 			unmapMem();
-			if(type == Buffer::kind::constant || type == Buffer::kind::dynamic_device_local)
+			if(type == Buffer::kind::constant)
 				pushToGPU();
 		}
 	}
@@ -59,7 +59,7 @@ namespace mlx
 		_buffer = VK_NULL_HANDLE;
 	}
 
-	void Buffer::createBuffer(VkBufferUsageFlags usage, VmaAllocationCreateInfo info, VkDeviceSize size, [[maybe_unused]] const char* name)
+	void Buffer::createBuffer(VkBufferUsageFlags usage, VmaAllocationCreateInfo info, VkDeviceSize size, const char* name)
 	{
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -74,40 +74,13 @@ namespace mlx
 				alloc_name.append("_index_buffer");
 			else if(usage & VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
 				alloc_name.append("_vertex_buffer");
-			else if(!(usage & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT))
+			else if((usage & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) != 1)
 				alloc_name.append("_buffer");
 			_allocation = Render_Core::get().getAllocator().createBuffer(&bufferInfo, &info, _buffer, alloc_name.c_str());
 		#else
 			_allocation = Render_Core::get().getAllocator().createBuffer(&bufferInfo, &info, _buffer, nullptr);
 		#endif
 		_size = size;
-	}
-
-	bool Buffer::copyFromBuffer(const Buffer& buffer) noexcept
-	{
-		if(!(_usage & VK_BUFFER_USAGE_TRANSFER_DST_BIT))
-		{
-			core::error::report(e_kind::error, "Vulkan : buffer cannot be the destination of a copy because it does not have the correct usage flag");
-			return false;
-		}
-		if(!(buffer._usage & VK_BUFFER_USAGE_TRANSFER_SRC_BIT))
-		{
-			core::error::report(e_kind::error, "Vulkan : buffer cannot be the source of a copy because it does not have the correct usage flag");
-			return false;
-		}
-
-		// TODO, use global cmd buffer pool to manage resources
-		CmdBuffer& cmd = Render_Core::get().getSingleTimeCmdBuffer();
-		cmd.beginRecord();
-
-		VkBufferCopy copyRegion{};
-		copyRegion.size = _size;
-		vkCmdCopyBuffer(cmd.get(), buffer._buffer, _buffer, 1, &copyRegion);
-
-		cmd.endRecord();
-		cmd.submitIdle();
-
-		return true;
 	}
 
 	void Buffer::pushToGPU() noexcept
@@ -124,8 +97,25 @@ namespace mlx
 			newBuffer.createBuffer(newBuffer._usage, alloc_info, _size, nullptr);
 		#endif
 
-		if(newBuffer.copyFromBuffer(*this)) // if the copy succeded we swap the buffers, else the new one is deleted
-			this->swap(newBuffer);
+		CmdPool cmdpool;
+		cmdpool.init();
+		CmdBuffer cmdBuffer;
+		cmdBuffer.init(&cmdpool);
+
+		cmdBuffer.beginRecord(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+		VkBufferCopy copyRegion{};
+		copyRegion.size = _size;
+		vkCmdCopyBuffer(cmdBuffer.get(), _buffer, newBuffer._buffer, 1, &copyRegion);
+
+		cmdBuffer.endRecord();
+		cmdBuffer.submitIdle();
+
+		cmdBuffer.destroy();
+		cmdpool.destroy();
+
+		this->swap(newBuffer);
+
 		newBuffer.destroy();
 	}
 

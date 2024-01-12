@@ -6,14 +6,14 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/31 13:18:50 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/14 18:24:58 by maldavid         ###   ########.fr       */
+/*   Updated: 2023/12/08 19:11:43 by kbz_8            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef __MLX_PIXEL_PUT__
 #define __MLX_PIXEL_PUT__
 
-#include <mlx_profile.h>
+#include <core/profile.h>
 #include <renderer/images/texture.h>
 #include <renderer/descriptors/vk_descriptor_set.h>
 
@@ -26,7 +26,7 @@ namespace mlx
 
 			void init(uint32_t width, uint32_t height, class Renderer& renderer) noexcept;
 
-			void setPixel(int x, int y, uint32_t color) noexcept;
+			void setPixel(uint32_t x, uint32_t y, uint32_t color) noexcept;
 			void present() noexcept;
 			void render(class Renderer& renderer) noexcept;
 			inline VkDescriptorSet getDescriptorSet() noexcept { return _texture.getSet(); }
