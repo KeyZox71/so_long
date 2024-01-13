@@ -6,12 +6,13 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 15:30:06 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/13 17:14:56 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/13 17:56:32 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "MacroLibX/includes/mlx.h"
 #include "libft/libft.h"
+#include "printf/ft_printf.h"
 #include "so_long.h"
 #include <stdio.h>
 #include <stddef.h>
@@ -35,7 +36,7 @@ void	ft_printmap(char **map, t_window *win)
 	int		y;
 
 	y = 0;
-	win->c_count = malloc(1 * sizeof(size_t));
+	// win->c_count = malloc(1 * sizeof(size_t));
 	win->c_count = 0;
 	while (map[y])
 	{
@@ -52,7 +53,12 @@ void	ft_printmap(char **map, t_window *win)
 				win->c_count++;
 			}
 			else if (map[y][x] == 'E')
+			{
+				win->e_coords = malloc(sizeof(t_coords *));
+				win->e_coords->x = x;
+				win->e_coords->y = y;
 				ft_putimg(x, y, win, E_PNG);
+			}
 			else if (map[y][x] == 'P')
 			{
 				win->p_coords = malloc(sizeof(t_coords *));

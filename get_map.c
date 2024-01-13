@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/08 13:13:18 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/13 15:27:42 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/13 19:02:19 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,7 @@ char	**ft_read_map(char	*file_name)
 			break ;
 		i++;
 	}
+	map_read[i] = NULL;
 	close(fd);
 	return (map_read);
 }

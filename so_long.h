@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:19:42 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/13 17:13:56 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/13 19:00:01 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,12 @@
 # include "MacroLibX/includes/mlx.h"
 # include "libft/libft.h"
 # include "get_next_line/get_next_line.h"
+# include "printf/ft_printf.h"
 # include <stddef.h>
 # include <unistd.h>
 # include <fcntl.h>
 # include <stdlib.h>
 
-# define T_SIZE 64
 # define P_PNG "assets/player.png"
 # define G_PNG "assets/ground.png"
 # define E_PNG "assets/exit.png"
@@ -32,7 +32,7 @@ typedef struct s_coords
 {
 	int	x;
 	int	y;
-}			t_coords;
+}		t_coords;
 
 typedef struct s_window
 {
@@ -41,8 +41,9 @@ typedef struct s_window
 	void		*img;
 	char		**map;
 	t_coords	*p_coords;
-	size_t		*c_count;
-	size_t		*mov_count;
+	t_coords	*e_coords;
+	size_t		c_count;
+	size_t		mov_count;
 }					t_window;
 
 int		ft_key_event(int key, void *param);
