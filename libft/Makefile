@@ -6,53 +6,76 @@
 #    By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/01 11:03:22 by adjoly            #+#    #+#              #
-#    Updated: 2024/01/13 19:09:13 by adjoly           ###   ########.fr        #
+#    Updated: 2024/01/07 22:47:45 by adjoly           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME = so_long
+NAME = libft.a
 
-CC = cc
+CC = clang
 
-SRCS = main.c \
-		get_map.c \
-		ft_move_character.c \
-		print_map.c
+SRCS = ft_atoi.c \
+		ft_bzero.c \
+		ft_isalnum.c \
+		ft_isalpha.c \
+		ft_isascii.c \
+		ft_isdigit.c \
+		ft_isprint.c \
+		ft_putchar_fd.c \
+		ft_putnbr_fd.c \
+		ft_putstr_fd.c \
+		ft_strdup.c \
+		ft_memcpy.c \
+		ft_memset.c \
+		ft_memmove.c \
+		ft_strlcpy.c \
+		ft_strlen.c \
+		ft_substr.c \
+		ft_tolower.c \
+		ft_toupper.c \
+		ft_strlcat.c \
+		ft_strjoin.c \
+		ft_strncmp.c \
+		ft_itoa.c \
+		ft_calloc.c \
+		ft_memchr.c \
+		ft_memcmp.c \
+		ft_strchr.c \
+		ft_strrchr.c \
+		ft_strnstr.c \
+		ft_putendl_fd.c \
+		ft_strtrim.c \
+		ft_split.c \
+		ft_strmapi.c \
+		ft_striteri.c \
+		ft_lstnew.c \
+		ft_lstadd_front.c \
+		ft_lstsize.c \
+		ft_lstlast.c \
+		ft_lstadd_back.c \
+		ft_lstdelone.c \
+		ft_lstclear.c \
+		ft_lstiter.c \
+		ft_lstmap.c \
 
 OBJS = $(SRCS:.c=.o)
 
-FLAGS = -Werror -Wall -Wextra -g
+FLAGS = -Werror -Wall -Wextra
 
-HEADERS = so_long.h
-
-LIB = MacroLibX/libmlx.so \
-			libft/libft.a \
-			get_next_line/get_next_line.a \
-			printf/libftprintf.a
-
-MLX_FLAGS = -lSDL2
+HEADER = libft.h
 
 $(NAME): $(OBJS)
-	make -C libft
-	make -C get_next_line
-	make -C printf
-	$(CC) $(FLAGS) $(MLX_FLAGS) $(OBJS) $(LIB) -o $(NAME)
+	ar -rcs	$(NAME) $(OBJS)
 
 %.o: %.c
-	$(CC) $(FLAGS) -I $(HEADERS) $< -c -o $@
+	$(CC) $(FLAGS) -I $(HEADER) $< -c -o $@
 
 all: $(NAME)
 
 clean:
-	make -C libft clean
-	make -C get_next_line clean
-	make -C printf clean
 	rm -f $(OBJS)
 
 fclean: clean
-	make -C libft fclean
-	make -C get_next_line fclean
-	make -C printf fclean
 	rm -f $(NAME)
 
 re: fclean all
