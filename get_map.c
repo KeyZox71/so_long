@@ -6,11 +6,12 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/08 13:13:18 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/09 15:25:08 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/13 15:27:42 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "so_long.h"
+#include <limits.h>
 
 int	ft_countline_fd(int fd)
 {
@@ -22,6 +23,7 @@ int	ft_countline_fd(int fd)
 	i = 0;
 	line_count = 0;
 	buf = ft_calloc(1, 1);
+	// buf = 0;
 	while (i < ULONG_MAX)
 	{
 		rd = read(fd, buf, 1);

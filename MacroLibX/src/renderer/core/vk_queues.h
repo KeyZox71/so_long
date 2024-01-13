@@ -6,17 +6,18 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 19:01:49 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/08 19:08:25 by kbz_8            ###   ########.fr       */
+/*   Updated: 2024/01/08 23:46:23 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef __MLX_VK_QUEUES__
 #define __MLX_VK_QUEUES__
 
+#include <mlx_profile.h>
 #include <volk.h>
 #include <optional>
 #include <cstdint>
-#include <core/profile.h>
+#include <core/errors.h>
 
 namespace mlx
 {
@@ -37,7 +38,13 @@ namespace mlx
 
 			inline VkQueue& getGraphic() noexcept { return _graphicsQueue; }
 			inline VkQueue& getPresent() noexcept { return _presentQueue; }
-			inline QueueFamilyIndices getFamilies() noexcept { return *_families; }
+			inline QueueFamilyIndices getFamilies() noexcept
+			{
+				if(_families.has_value())
+					return *_families;
+				core::error::report(e_kind::fatal_error, "Vulkan : cannot get queue families, not init");
+				return {}; // just to avoid warnings
+			}
 
 		private:
 			VkQueue _graphicsQueue;

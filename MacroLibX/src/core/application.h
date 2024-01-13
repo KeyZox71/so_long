@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/04 21:49:46 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/08 18:52:47 by kbz_8            ###   ########.fr       */
+/*   Updated: 2024/01/10 19:57:12 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,8 @@
 
 #include <core/graphics.h>
 #include <platform/inputs.h>
-#include <core/profile.h>
+#include <mlx_profile.h>
+#include <core/profiler.h>
 
 namespace mlx::core
 {
@@ -40,12 +41,12 @@ namespace mlx::core
 
 			inline void getScreenSize(int* w, int* h) noexcept;
 
-			inline void* newGraphicsSuport(std::size_t w, std::size_t h, std::string title);
+			inline void* newGraphicsSuport(std::size_t w, std::size_t h, const char* title);
 			inline void clearGraphicsSupport(void* win);
 			inline void destroyGraphicsSupport(void* win);
 
 			inline void pixelPut(void* win, int x, int y, uint32_t color) const noexcept;
-			inline void stringPut(void* win, int x, int y, int color, char* str);
+			inline void stringPut(void* win, int x, int y, uint32_t color, char* str);
 
 			void* newTexture(int w, int h);
 			void* newStbTexture(char* file, int* w, int* h); // stb textures are format managed by stb image (png, jpg, bpm, ...)
@@ -69,7 +70,6 @@ namespace mlx::core
 			std::function<int(void*)> _loop_hook;
 			std::unique_ptr<Input> _in;
 			void* _param = nullptr;
-			bool _is_loop_running = false;
 	};
 }
 

@@ -35,9 +35,9 @@ jobs:
 
     # Build the lib
     - name: Build MacroLibX
-      run: make TOOLCHAIN=gcc -j
+      run: make TOOLCHAIN=gcc -j && make fclean && make TOOLCHAIN=gcc DEBUG=true -j
 
-    # Build the test
-    - name: Build Test
-      run: cd test && gcc main.c ../libmlx.so -lSDL2
+    # Build the example
+    - name: Build Example
+      run: cd example && bash ./build.sh
 

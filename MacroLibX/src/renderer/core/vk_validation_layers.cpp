@@ -3,19 +3,20 @@
 /*                                                        :::      ::::::::   */
 /*   vk_validation_layers.cpp                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: maldavid <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/19 14:05:25 by maldavid          #+#    #+#             */
-/*   Updated: 2023/11/20 07:21:57 by maldavid         ###   ########.fr       */
+/*   Updated: 2024/01/10 21:55:54 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "vk_validation_layers.h"
 #include "render_core.h"
+#include "vulkan/vulkan_core.h"
 
 #include <core/errors.h>
 #include <iostream>
 #include <cstring>
+#include <algorithm>
 
 namespace mlx
 {
@@ -24,13 +25,32 @@ namespace mlx
 		if constexpr(!enableValidationLayers)
 			return;
 
-		VkDebugUtilsMessengerCreateInfoEXT createInfo;
+		uint32_t extensionCount;
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+		std::vector<VkExtensionProperties> extensions(extensionCount);
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+		if(!std::any_of(extensions.begin(), extensions.end(), [=](VkExtensionProperties ext) { return std::strcmp(ext.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; }))
+		{
+			core::error::report(e_kind::warning , "Vulkan : %s not present, debug utils are disabled", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			return;
+		}
+
+		VkDebugUtilsMessengerCreateInfoEXT createInfo{};
 		populateDebugMessengerCreateInfo(createInfo);
-		if(createDebugUtilsMessengerEXT(&createInfo, nullptr) != VK_SUCCESS)
-			core::error::report(e_kind::error, "Vulkan : failed to set up debug messenger");
+		VkResult res = createDebugUtilsMessengerEXT(&createInfo, nullptr);
+		if(res != VK_SUCCESS)
+			core::error::report(e_kind::warning, "Vulkan : failed to set up debug messenger, %s", RCore::verbaliseResultVk(res));
 		#ifdef DEBUG
 		else
 			core::error::report(e_kind::message, "Vulkan : enabled validation layers");
+		#endif
+
+		real_vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(Render_Core::get().getInstance().get(), "vkSetDebugUtilsObjectNameEXT");
+		if(!real_vkSetDebugUtilsObjectNameEXT)
+			core::error::report(e_kind::warning, "Vulkan : failed to set up debug object names, %s", RCore::verbaliseResultVk(VK_ERROR_EXTENSION_NOT_PRESENT));
+		#ifdef DEBUG
+		else
+			core::error::report(e_kind::message, "Vulkan : enabled debug object names");
 		#endif
 	}
 
@@ -42,36 +62,28 @@ namespace mlx
 		std::vector<VkLayerProperties> availableLayers(layerCount);
 		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-		for(const char* layerName : validationLayers)
+		return std::all_of(validationLayers.begin(), validationLayers.end(), [&](const char* layerName)
 		{
-			bool layerFound = false;
-
-			for(const auto& layerProperties : availableLayers)
+			if(!std::any_of(availableLayers.begin(), availableLayers.end(), [=](VkLayerProperties props) { return std::strcmp(layerName, props.layerName) == 0; }))
 			{
-				if(std::strcmp(layerName, layerProperties.layerName) == 0)
-				{
-					layerFound = true;
-					break;
-				}
-			}
-
-			if(!layerFound)
+				core::error::report(e_kind::error, "Vulkan : a validation layer was requested but was not found ('%s')", layerName);
 				return false;
-		}
-		return true;
+			}
+			return true;
+		});
 	}
 
-	void ValidationLayers::destroy()
+	VkResult ValidationLayers::setDebugUtilsObjectNameEXT(VkObjectType object_type, uint64_t object_handle, const char* object_name)
 	{
-		if constexpr(!enableValidationLayers)
-			return;
-		destroyDebugUtilsMessengerEXT(nullptr);
-	}
+		if(!real_vkSetDebugUtilsObjectNameEXT)
+			return VK_ERROR_EXTENSION_NOT_PRESENT;
 
-	VkResult ValidationLayers::createDebugUtilsMessengerEXT(const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator)
-	{
-		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(Render_Core::get().getInstance().get(), "vkCreateDebugUtilsMessengerEXT");
-		return func != nullptr ? func(Render_Core::get().getInstance().get(), pCreateInfo, pAllocator, &_debugMessenger) : VK_ERROR_EXTENSION_NOT_PRESENT;
+		VkDebugUtilsObjectNameInfoEXT name_info{};
+		name_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+		name_info.objectType = object_type;
+		name_info.objectHandle = object_handle;
+		name_info.pObjectName = object_name;
+		return real_vkSetDebugUtilsObjectNameEXT(Render_Core::get().getDevice().get(), &name_info);
 	}
 
 	void ValidationLayers::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
@@ -83,19 +95,29 @@ namespace mlx
 		createInfo.pfnUserCallback = ValidationLayers::debugCallback;
 	}
 
-	VKAPI_ATTR VkBool32 VKAPI_CALL ValidationLayers::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+	void ValidationLayers::destroy()
+	{
+		if constexpr(enableValidationLayers)
+		{
+			destroyDebugUtilsMessengerEXT(nullptr);
+			#ifdef DEBUG
+				core::error::report(e_kind::message, "Vulkan : destroyed validation layers");
+			#endif
+		}
+	}
+
+	VkResult ValidationLayers::createDebugUtilsMessengerEXT(const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator)
+	{
+		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(Render_Core::get().getInstance().get(), "vkCreateDebugUtilsMessengerEXT");
+		return func != nullptr ? func(Render_Core::get().getInstance().get(), pCreateInfo, pAllocator, &_debugMessenger) : VK_ERROR_EXTENSION_NOT_PRESENT;
+	}
+
+	VKAPI_ATTR VkBool32 VKAPI_CALL ValidationLayers::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, [[maybe_unused]] void* pUserData)
 	{
 		if(messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-		{
-			std::cout << '\n';
-			core::error::report(e_kind::error, std::string("Vulkan layer error: ") + pCallbackData->pMessage);
-		}
+			core::error::report(e_kind::error, pCallbackData->pMessage);
 		else if(messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-		{
-			std::cout << '\n';
-			core::error::report(e_kind::warning, std::string("Vulkan layer warning: ") + pCallbackData->pMessage);
-		}
-
+			core::error::report(e_kind::warning, pCallbackData->pMessage);
 		return VK_FALSE;
 	}
 

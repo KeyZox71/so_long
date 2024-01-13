@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/02 15:13:55 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/09 16:52:08 by kbz_8            ###   ########.fr       */
+/*   Updated: 2024/01/11 04:38:53 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,51 +14,58 @@
 
 namespace mlx
 {
-	GraphicsSupport::GraphicsSupport(std::size_t w, std::size_t h, const std::string& title, int id) :
-		_window(std::make_shared<MLX_Window>(w, h, title)),
-		_renderer(std::make_unique<Renderer>()), _text_put_pipeline(std::make_unique<TextPutPipeline>()),
-		_id(id)
+	GraphicsSupport::GraphicsSupport(std::size_t w, std::size_t h, Texture* render_target, int id) :
+		_window(nullptr),
+		_renderer(std::make_unique<Renderer>()),
+		_width(w),
+		_height(h),
+		_id(id),
+		_has_window(false)
 	{
-		_renderer->setWindow(_window.get());
-		_renderer->init();
+		MLX_PROFILE_FUNCTION();
+		_renderer->setWindow(nullptr);
+		_renderer->init(render_target);
 		_pixel_put_pipeline.init(w, h, *_renderer);
-		_text_put_pipeline->init(_renderer.get());
+		_text_manager.init(*_renderer);
 	}
 
-	void GraphicsSupport::endRender() noexcept
+	GraphicsSupport::GraphicsSupport(std::size_t w, std::size_t h, std::string title, int id) :
+		_window(std::make_shared<MLX_Window>(w, h, title)),
+		_renderer(std::make_unique<Renderer>()), 
+		_width(w),
+		_height(h),
+		_id(id),
+		_has_window(true)
 	{
-		auto cmd_buff = _renderer->getActiveCmdBuffer().get();
+		MLX_PROFILE_FUNCTION();
+		_renderer->setWindow(_window.get());
+		_renderer->init(nullptr);
+		_pixel_put_pipeline.init(w, h, *_renderer);
+		_text_manager.init(*_renderer);
+	}
+
+	void GraphicsSupport::render() noexcept
+	{
+		MLX_PROFILE_FUNCTION();
+		if(!_renderer->beginFrame())
+			return;
+		_proj = glm::ortho<float>(0, _width, 0, _height);
+		_renderer->getUniformBuffer()->setData(sizeof(_proj), &_proj);
 
 		static std::array<VkDescriptorSet, 2> sets = {
 			_renderer->getVertDescriptorSet().get(), 
 			VK_NULL_HANDLE
 		};
 
-		for(auto& data : _textures_to_render)
-		{
-			if(data.texture->getSet() == VK_NULL_HANDLE)
-				data.texture->setDescriptor(_renderer->getFragDescriptorSet().duplicate());
-			if(!data.texture->hasBeenUpdated())
-				data.texture->updateSet(0);
-			sets[1] = data.texture->getSet();
-			vkCmdBindDescriptorSets(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->getPipeline().getPipelineLayout(), 0, sets.size(), sets.data(), 0, nullptr);
-			data.texture->render(*_renderer, data.x, data.y);
-		}
+		for(auto& data : _drawlist)
+			data->render(sets, *_renderer);
 
-		_pixel_put_pipeline.present();
-
-		sets[1] = _pixel_put_pipeline.getDescriptorSet();
-		vkCmdBindDescriptorSets(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->getPipeline().getPipelineLayout(), 0, sets.size(), sets.data(), 0, nullptr);
-		_pixel_put_pipeline.render(*_renderer);
-
-		sets[1] = _text_put_pipeline->getDescriptorSet();
-		vkCmdBindDescriptorSets(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderer->getPipeline().getPipelineLayout(), 0, sets.size(), sets.data(), 0, nullptr);
-		_text_put_pipeline->render();
+		_pixel_put_pipeline.render(sets, *_renderer);
 
 		_renderer->endFrame();
 
-		for(auto& data : _textures_to_render)
-			data.texture->resetUpdate();
+		for(auto& data : _drawlist)
+			data->resetUpdate();
 
 		#ifdef GRAPHICS_MEMORY_DUMP
 			// dump memory to file every two seconds
@@ -73,10 +80,12 @@ namespace mlx
 
 	GraphicsSupport::~GraphicsSupport()
 	{
+		MLX_PROFILE_FUNCTION();
 		vkDeviceWaitIdle(Render_Core::get().getDevice().get());
-		_text_put_pipeline->destroy();
+		_text_manager.destroy();
 		_pixel_put_pipeline.destroy();
 		_renderer->destroy();
-		_window->destroy();
+		if(_window)
+			_window->destroy();
 	}
 }

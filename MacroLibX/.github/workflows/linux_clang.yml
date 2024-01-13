@@ -35,8 +35,8 @@ jobs:
 
     # Build the lib
     - name: Build MacroLibX
-      run: make -j
+      run: make -j && make fclean && make -j DEBUG=true
 
-    # Build the test
-    - name: Build Test
-      run: cd test && clang main.c ../libmlx.so -lSDL2
+    # Build the example
+    - name: Build Example
+      run: cd example && bash ./build.sh

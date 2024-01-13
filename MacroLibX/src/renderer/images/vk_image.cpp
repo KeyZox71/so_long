@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/01/25 11:59:07 by maldavid          #+#    #+#             */
-/*   Updated: 2023/11/18 17:21:14 by maldavid         ###   ########.fr       */
+/*   Updated: 2024/01/07 01:17:54 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,43 +99,6 @@ namespace mlx
 		return accessMask;
 	}
 
-	VkPipelineStageFlags accessFlagsToPipelineStage(VkAccessFlags accessFlags, VkPipelineStageFlags stageFlags)
-	{
-		VkPipelineStageFlags stages = 0;
-
-		while(accessFlags != 0)
-		{
-			VkAccessFlagBits AccessFlag = static_cast<VkAccessFlagBits>(accessFlags & (~(accessFlags - 1)));
-			if(AccessFlag == 0 || (AccessFlag & (AccessFlag - 1)) != 0)
-				core::error::report(e_kind::fatal_error, "Vulkan : an error has been caught during access flag to pipeline stage operation");
-			accessFlags &= ~AccessFlag;
-
-			switch(AccessFlag)
-			{
-				case VK_ACCESS_INDIRECT_COMMAND_READ_BIT: stages |= VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT; break;
-				case VK_ACCESS_INDEX_READ_BIT: stages |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT; break;
-				case VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT: stages |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT; break;
-				case VK_ACCESS_UNIFORM_READ_BIT: stages |= stageFlags | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT; break;
-				case VK_ACCESS_INPUT_ATTACHMENT_READ_BIT: stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT; break;
-				case VK_ACCESS_SHADER_READ_BIT: stages |= stageFlags | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT; break;
-				case VK_ACCESS_SHADER_WRITE_BIT: stages |= stageFlags | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT; break;
-				case VK_ACCESS_COLOR_ATTACHMENT_READ_BIT: stages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; break;
-				case VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT: stages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; break;
-				case VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT: stages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT; break;
-				case VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT: stages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT; break;
-				case VK_ACCESS_TRANSFER_READ_BIT: stages |= VK_PIPELINE_STAGE_TRANSFER_BIT; break;
-				case VK_ACCESS_TRANSFER_WRITE_BIT: stages |= VK_PIPELINE_STAGE_TRANSFER_BIT; break;
-				case VK_ACCESS_HOST_READ_BIT: stages |= VK_PIPELINE_STAGE_HOST_BIT; break;
-				case VK_ACCESS_HOST_WRITE_BIT: stages |= VK_PIPELINE_STAGE_HOST_BIT; break;
-				case VK_ACCESS_MEMORY_READ_BIT: break;
-				case VK_ACCESS_MEMORY_WRITE_BIT: break;
-
-				default: core::error::report(e_kind::error, "Vulkan : unknown access flag"); break;
-			}
-		}
-		return stages;
-	}
-
 	void Image::create(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, const char* name, bool dedicated_memory)
 	{
 		_width = width;
@@ -167,8 +130,9 @@ namespace mlx
 		}
 
 		_allocation = Render_Core::get().getAllocator().createImage(&imageInfo, &alloc_info, _image, name);
-
-		_pool.init();
+		#ifdef DEBUG
+			_name = name;
+		#endif
 	}
 
 	void Image::createImageView(VkImageViewType type, VkImageAspectFlags aspectFlags) noexcept
@@ -184,8 +148,13 @@ namespace mlx
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 1;
 
-		if(vkCreateImageView(Render_Core::get().getDevice().get(), &viewInfo, nullptr, &_image_view) != VK_SUCCESS)
-			core::error::report(e_kind::fatal_error, "Vulkan : failed to create an image view");
+		VkResult res = vkCreateImageView(Render_Core::get().getDevice().get(), &viewInfo, nullptr, &_image_view);
+		if(res != VK_SUCCESS)
+			core::error::report(e_kind::fatal_error, "Vulkan : failed to create an image view, %s", RCore::verbaliseResultVk(res));
+		#ifdef DEBUG
+		else
+			Render_Core::get().getLayers().setDebugUtilsObjectNameEXT(VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)_image_view, _name.c_str());
+		#endif
 	}
 
 	void Image::createSampler() noexcept
@@ -203,161 +172,66 @@ namespace mlx
 		info.anisotropyEnable = VK_FALSE;
 		info.maxAnisotropy = 1.0f;
 
-		if(vkCreateSampler(Render_Core::get().getDevice().get(), &info, nullptr, &_sampler) != VK_SUCCESS)
-			core::error::report(e_kind::fatal_error, "Vulkan : failed to create an image");
+		VkResult res = vkCreateSampler(Render_Core::get().getDevice().get(), &info, nullptr, &_sampler);
+		if(res != VK_SUCCESS)
+			core::error::report(e_kind::fatal_error, "Vulkan : failed to create an image sampler, %s", RCore::verbaliseResultVk(res));
+		#ifdef DEBUG
+		else
+			Render_Core::get().getLayers().setDebugUtilsObjectNameEXT(VK_OBJECT_TYPE_SAMPLER, (uint64_t)_sampler, _name.c_str());
+		#endif
 	}
 
 	void Image::copyFromBuffer(Buffer& buffer)
 	{
-		if(!_transfer_cmd.isInit())
-			_transfer_cmd.init(&_pool);
+		CmdBuffer& cmd = Render_Core::get().getSingleTimeCmdBuffer();
+		cmd.beginRecord();
 
-		_transfer_cmd.reset();
-		_transfer_cmd.beginRecord();
+		VkImageLayout layout_save = _layout;
+		transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &cmd);
 
-		VkImageMemoryBarrier copy_barrier{};
-		copy_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		copy_barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		copy_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		copy_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		copy_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		copy_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		copy_barrier.image = _image;
-		copy_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		copy_barrier.subresourceRange.levelCount = 1;
-		copy_barrier.subresourceRange.layerCount = 1;
-		vkCmdPipelineBarrier(_transfer_cmd.get(), VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &copy_barrier);
+		cmd.copyBufferToImage(buffer, *this);
 
-		VkBufferImageCopy region{};
-		region.bufferOffset = 0;
-		region.bufferRowLength = 0;
-		region.bufferImageHeight = 0;
-		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		region.imageSubresource.mipLevel = 0;
-		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
-		region.imageOffset = { 0, 0, 0 };
-		region.imageExtent = { _width, _height, 1 };
+		transitionLayout(layout_save, &cmd);
 
-		vkCmdCopyBufferToImage(_transfer_cmd.get(), buffer.get(), _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-		VkImageMemoryBarrier use_barrier{};
-		use_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		use_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		use_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		use_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		use_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		use_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		use_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		use_barrier.image = _image;
-		use_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		use_barrier.subresourceRange.levelCount = 1;
-		use_barrier.subresourceRange.layerCount = 1;
-		vkCmdPipelineBarrier(_transfer_cmd.get(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &use_barrier);
-
-		_transfer_cmd.endRecord();
-		_transfer_cmd.submitIdle();
+		cmd.endRecord();
+		cmd.submitIdle();
 	}
 
 	void Image::copyToBuffer(Buffer& buffer)
 	{
-		if(!_transfer_cmd.isInit())
-			_transfer_cmd.init(&_pool);
+		CmdBuffer& cmd = Render_Core::get().getSingleTimeCmdBuffer();
+		cmd.beginRecord();
 
-		_transfer_cmd.reset();
-		_transfer_cmd.beginRecord();
+		VkImageLayout layout_save = _layout;
+		transitionLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, &cmd);
 
-		VkImageMemoryBarrier copy_barrier{};
-		copy_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		copy_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		copy_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		copy_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		copy_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		copy_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		copy_barrier.image = _image;
-		copy_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		copy_barrier.subresourceRange.levelCount = 1;
-		copy_barrier.subresourceRange.layerCount = 1;
-		vkCmdPipelineBarrier(_transfer_cmd.get(), VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &copy_barrier);
+		cmd.copyImagetoBuffer(*this, buffer);
 
-		VkBufferImageCopy region{};
-		region.bufferOffset = 0;
-		region.bufferRowLength = 0;
-		region.bufferImageHeight = 0;
-		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		region.imageSubresource.mipLevel = 0;
-		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
-		region.imageOffset = { 0, 0, 0 };
-		region.imageExtent = { _width, _height, 1 };
+		transitionLayout(layout_save, &cmd);
 
-		vkCmdCopyImageToBuffer(_transfer_cmd.get(), _image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer.get(), 1, &region);
-
-		VkImageMemoryBarrier use_barrier{};
-		use_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		use_barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		use_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		use_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		use_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		use_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		use_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		use_barrier.image = _image;
-		use_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		use_barrier.subresourceRange.levelCount = 1;
-		use_barrier.subresourceRange.layerCount = 1;
-		vkCmdPipelineBarrier(_transfer_cmd.get(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &use_barrier);
-
-		_transfer_cmd.endRecord();
-		_transfer_cmd.submitIdle();
+		cmd.endRecord();
+		cmd.submitIdle();
 	}
 
-	void Image::transitionLayout(VkImageLayout new_layout)
+	void Image::transitionLayout(VkImageLayout new_layout, CmdBuffer* cmd)
 	{
 		if(new_layout == _layout)
 			return;
 
-		if(!_transfer_cmd.isInit())
-			_transfer_cmd.init(&_pool);
-		_transfer_cmd.reset();
-		_transfer_cmd.beginRecord();
+		bool singleTime = (cmd == nullptr);
+		if(singleTime)
+		{
+			cmd = &Render_Core::get().getSingleTimeCmdBuffer();
+			cmd->beginRecord();
+		}
 
-		VkImageMemoryBarrier barrier{};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = _layout;
-		barrier.newLayout = new_layout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = _image;
-		barrier.subresourceRange.aspectMask = isDepthFormat(_format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-		barrier.srcAccessMask = layoutToAccessMask(_layout, false);
-		barrier.dstAccessMask = layoutToAccessMask(new_layout, true);
-		if(isStencilFormat(_format))
-			barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		cmd->transitionImageLayout(*this, new_layout);
 
-		VkPipelineStageFlags sourceStage = 0;
-		if(barrier.oldLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-			sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		else if(barrier.srcAccessMask != 0)
-			sourceStage = accessFlagsToPipelineStage(barrier.srcAccessMask, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-		else
-			sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-
-		VkPipelineStageFlags destinationStage = 0;
-		if(barrier.newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-			destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		else if(barrier.dstAccessMask != 0)
-			destinationStage = accessFlagsToPipelineStage(barrier.dstAccessMask, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-		else
-			destinationStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-
-		vkCmdPipelineBarrier(_transfer_cmd.get(), sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-		_transfer_cmd.endRecord();
-		_transfer_cmd.submitIdle();
+		if(singleTime)
+		{
+			cmd->endRecord();
+			cmd->submitIdle();
+		}
 		_layout = new_layout;
 	}
 
@@ -377,13 +251,17 @@ namespace mlx
 
 	void Image::destroy() noexcept
 	{
-		destroySampler();
-		destroyImageView();
-		destroyCmdPool();
+		// not creating destroyer in `create` as some image may be copied (and so `this` will be invalid)
+		CmdResource::setDestroyer([this]()
+		{
+			destroySampler();
+			destroyImageView();
 
-		if(_image != VK_NULL_HANDLE)
-			Render_Core::get().getAllocator().destroyImage(_allocation, _image);
-		_image = VK_NULL_HANDLE;
+			if(_image != VK_NULL_HANDLE)
+				Render_Core::get().getAllocator().destroyImage(_allocation, _image);
+			_image = VK_NULL_HANDLE;
+		});
+		CmdResource::requireDestroy();
 	}
 
 	uint32_t formatSize(VkFormat format)

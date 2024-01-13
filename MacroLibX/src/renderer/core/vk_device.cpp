@@ -6,11 +6,12 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 19:14:29 by maldavid          #+#    #+#             */
-/*   Updated: 2023/11/18 17:22:02 by maldavid         ###   ########.fr       */
+/*   Updated: 2024/01/10 21:54:17 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "render_core.h"
+#include <iterator>
 #include <vector>
 #include <set>
 #include <SDL2/SDL.h>
@@ -56,8 +57,9 @@ namespace mlx
 		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		createInfo.enabledLayerCount = 0;
 
-		if(vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device) != VK_SUCCESS)
-			core::error::report(e_kind::fatal_error, "Vulkan : failed to create logcal device");
+		VkResult res;
+		if((res = vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device)) != VK_SUCCESS)
+			core::error::report(e_kind::fatal_error, "Vulkan : failed to create logcal device, %s", RCore::verbaliseResultVk(res));
 		#ifdef DEBUG
 			core::error::report(e_kind::message, "Vulkan : created new logical device");
 		#endif
@@ -84,11 +86,10 @@ namespace mlx
 
 		std::vector<std::pair<int, VkPhysicalDevice>> devices_score;
 
-		for(const auto& device : devices)
-			devices_score.emplace_back(deviceScore(device, surface), device);
-
-		vkDestroySurfaceKHR(Render_Core::get().getInstance().get(), surface, nullptr);
-		SDL_DestroyWindow(window);
+		std::transform(devices.cbegin(), devices.cend(), std::back_inserter(devices_score), [&](VkPhysicalDevice device)
+		{
+			return std::make_pair(deviceScore(device, surface), device);
+		});
 
 		using device_pair = std::pair<int, VkPhysicalDevice>;
 		std::sort(devices_score.begin(), devices_score.end(), [](const device_pair& a, const device_pair& b)
@@ -106,6 +107,9 @@ namespace mlx
 			vkGetPhysicalDeviceProperties(_physicalDevice, &props);
 			core::error::report(e_kind::message, "Vulkan : picked a physical device, %s", props.deviceName);
 		#endif
+		Render_Core::get().getQueue().findQueueFamilies(_physicalDevice, surface); // update queue indicies to current physical device
+		vkDestroySurfaceKHR(Render_Core::get().getInstance().get(), surface, nullptr);
+		SDL_DestroyWindow(window);
 	}
 
 	int Device::deviceScore(VkPhysicalDevice device, VkSurfaceKHR surface)
@@ -155,5 +159,8 @@ namespace mlx
 	{
 		vkDestroyDevice(_device, nullptr);
 		_device = VK_NULL_HANDLE;
+		#ifdef DEBUG
+			core::error::report(e_kind::message, "Vulkan : destroyed a logical device");
+		#endif
 	}
 }

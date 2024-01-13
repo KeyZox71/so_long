@@ -6,14 +6,13 @@
 #    By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/10/04 16:43:41 by maldavid          #+#    #+#              #
-#    Updated: 2023/12/07 15:25:52 by kbz_8            ###   ########.fr        #
+#    Updated: 2024/01/10 14:20:30 by maldavid         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME		= libmlx.so
 
 SRCS		=  $(wildcard $(addsuffix /*.cpp, ./src/core))
-SRCS		+= $(wildcard $(addsuffix /*.cpp, ./src/core/**))
 SRCS		+= $(wildcard $(addsuffix /*.cpp, ./src/platform))
 SRCS		+= $(wildcard $(addsuffix /*.cpp, ./src/renderer))
 SRCS		+= $(wildcard $(addsuffix /*.cpp, ./src/renderer/**))
@@ -27,22 +26,28 @@ TOOLCHAIN	?= clang
 IMAGES_OPTIMIZED	?= true
 FORCE_INTEGRATED_GPU ?= false
 GRAPHICS_MEMORY_DUMP ?= false
+PROFILER ?= false
 
 MODE	= "release"
 
 CXX		= clang++
 
-ifeq ($(TOOLCHAIN), gcc)
-	CXX = g++
-endif
-
-CXXFLAGS	= -std=c++17 -O3 -fPIC
+CXXFLAGS	= -std=c++17 -O3 -fPIC -Wall -Wextra -Werror -DSDL_MAIN_HANDLED
 INCLUDES	= -I./includes -I./src -I./third_party
 
 LDLIBS =
 
+ifeq ($(TOOLCHAIN), gcc)
+	CXX = g++
+	CXXFLAGS += -Wno-error=cpp
+else
+	CXXFLAGS += -Wno-error=#warning
+endif
+
 ifeq ($(OS), Darwin)
-	LDLIBS += -lSDL2
+	LDLIBS += -L /opt/homebrew/lib -lSDL2
+	CXXFLAGS += -I /opt/homebrew/include
+	NAME = libmlx.dylib
 endif
 
 ifeq ($(DEBUG), true)
@@ -60,6 +65,10 @@ endif
 
 ifeq ($(GRAPHICS_MEMORY_DUMP), true)
 	CXXFLAGS += -D GRAPHICS_MEMORY_DUMP
+endif
+
+ifeq ($(PROFILER), true)
+	CXXFLAGS += -D PROFILER
 endif
 
 RM = rm -rf

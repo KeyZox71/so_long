@@ -6,16 +6,16 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/20 02:13:03 by maldavid          #+#    #+#             */
-/*   Updated: 2023/12/08 19:07:34 by kbz_8            ###   ########.fr       */
+/*   Updated: 2024/01/03 15:25:56 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef __MLX_VK_MEMORY__
 #define __MLX_VK_MEMORY__
 
+#include <mlx_profile.h>
 #include <volk.h>
 #include <vma.h>
-#include <core/profile.h>
 
 namespace mlx
 {
@@ -44,6 +44,8 @@ namespace mlx
 
 		private:
 			VmaAllocator _allocator;
+			uint32_t _active_buffers_allocations = 0;
+			uint32_t _active_images_allocations = 0;
 	};
 }
 

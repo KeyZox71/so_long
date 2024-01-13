@@ -6,7 +6,7 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/18 21:27:38 by maldavid          #+#    #+#             */
-/*   Updated: 2023/11/25 10:23:20 by maldavid         ###   ########.fr       */
+/*   Updated: 2024/01/10 21:53:38 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -222,14 +222,14 @@ namespace mlx
 		VkViewport viewport{};
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
-		viewport.width = (float)renderer.getSwapChain().getExtent().width;
-		viewport.height = (float)renderer.getSwapChain().getExtent().height;
+		viewport.width = (float)renderer.getFrameBuffer(0).getWidth();
+		viewport.height = (float)renderer.getFrameBuffer(0).getHeight();
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 
 		VkRect2D scissor{};
 		scissor.offset = { 0, 0 };
-		scissor.extent = renderer.getSwapChain().getExtent();
+		scissor.extent = { renderer.getFrameBuffer(0).getWidth(), renderer.getFrameBuffer(0).getHeight()};
 
 		VkPipelineViewportStateCreateInfo viewportState{};
 		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -305,8 +305,9 @@ namespace mlx
 		pipelineInfo.subpass = 0;
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-		if(vkCreateGraphicsPipelines(Render_Core::get().getDevice().get(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_graphicsPipeline) != VK_SUCCESS)
-			core::error::report(e_kind::fatal_error, "Vulkan : failed to create a graphics pipeline");
+		VkResult res = vkCreateGraphicsPipelines(Render_Core::get().getDevice().get(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_graphicsPipeline);
+		if(res != VK_SUCCESS)
+			core::error::report(e_kind::fatal_error, "Vulkan : failed to create a graphics pipeline, %s", RCore::verbaliseResultVk(res));
 #ifdef DEBUG
 		core::error::report(e_kind::message, "Vulkan : created new graphic pipeline");
 #endif
@@ -319,5 +320,9 @@ namespace mlx
 	{
 		vkDestroyPipeline(Render_Core::get().getDevice().get(), _graphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(Render_Core::get().getDevice().get(), _pipelineLayout, nullptr);
+		_graphicsPipeline = VK_NULL_HANDLE;
+		#ifdef DEBUG
+			core::error::report(e_kind::message, "Vulkan : destroyed a graphics pipeline");
+		#endif
 	}
 }

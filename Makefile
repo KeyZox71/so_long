@@ -6,7 +6,7 @@
 #    By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/01 11:03:22 by adjoly            #+#    #+#              #
-#    Updated: 2024/01/10 15:08:43 by adjoly           ###   ########.fr        #
+#    Updated: 2024/01/13 16:14:46 by adjoly           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,11 +32,11 @@ LIB = MacroLibX/libmlx.so \
 MLX_FLAGS = -lSDL2
 
 $(NAME): $(OBJS)
+	make -C libft
+	make -C get_next_line
 	$(CC) $(FLAGS) $(MLX_FLAGS) $(OBJS) $(LIB) -o $(NAME)
 
 %.o: %.c
-	make -C libft
-	make -C get_next_line
 	$(CC) $(FLAGS) -I $(HEADERS) $< -c -o $@
 
 all: $(NAME)
