@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/30 18:15:57 by adjoly            #+#    #+#             */
-/*   Updated: 2023/11/01 17:15:12 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/17 11:30:30 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,13 @@
 
 size_t	ft_strlen(const char *s)
 {
-	int	i;
+	size_t	res;
 
-	i = 0;
-	while (s[i])
-		i++;
-	return (i);
+	res = 0;
+	while (*s)
+	{
+		s++;
+		res++;
+	}
+	return (res);
 }

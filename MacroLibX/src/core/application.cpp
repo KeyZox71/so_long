@@ -6,12 +6,13 @@
 /*   By: maldavid <kbz_8.dev@akel-engine.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/04 22:10:52 by maldavid          #+#    #+#             */
-/*   Updated: 2024/01/11 05:08:42 by maldavid         ###   ########.fr       */
+/*   Updated: 2024/01/18 15:19:58 by maldavid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "application.h"
 #include <renderer/texts/text_library.h>
+#include <renderer/texts/font_library.h>
 #include <SDL2/SDL.h>
 #include <renderer/images/texture.h>
 #include <renderer/core/render_core.h>
@@ -23,8 +24,9 @@
 namespace mlx::core
 {
 	static bool __drop_sdl_responsability = false;
-	Application::Application() : _in(std::make_unique<Input>())
+	Application::Application() : _fps(), _in(std::make_unique<Input>()) 
 	{
+		_fps.init();
 		__drop_sdl_responsability = SDL_WasInit(SDL_INIT_VIDEO);
 		if(__drop_sdl_responsability) // is case the mlx is running in a sandbox like MacroUnitTester where SDL is already init
 			return;
@@ -37,6 +39,8 @@ namespace mlx::core
 	{
 		while(_in->is_running())
 		{
+			if(!_fps.update())
+				continue;
 			_in->update();
 
 			if(_loop_hook)
@@ -84,6 +88,7 @@ namespace mlx::core
 	Application::~Application()
 	{
 		TextLibrary::get().clearLibrary();
+		FontLibrary::get().clearLibrary();
 		if(__drop_sdl_responsability)
 			return;
 		SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);

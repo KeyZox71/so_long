@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:19:42 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/13 19:00:01 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/19 14:34:31 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,21 +38,28 @@ typedef struct s_window
 {
 	void		*mlx;
 	void		*win;
-	void		*img;
+	void		**img;
 	char		**map;
 	t_coords	*p_coords;
 	t_coords	*e_coords;
 	size_t		c_count;
 	size_t		mov_count;
+	t_coords	*map_size;
 }					t_window;
 
 int		ft_key_event(int key, void *param);
 
+void	ft_freemap(char	**map);
 int		check_wall(char **map, t_coords *player);
-int		ft_countline_fd(int fd);
+size_t	ft_countline_fd(int fd);
 char	**ft_read_map(char	*file_name);
 
 void	ft_printmap(char **map, t_window *win);
 void	ft_putimg(size_t x, size_t y, t_window *win, char *file_path);
+void	ft_check_map_error(char	**map);
+
+char	ft_valid_file_ext(char *file_name);
+void	ft_send_error(char *msg, char **map);
+void	ft_check_map_error(char	**map);
 
 #endif
