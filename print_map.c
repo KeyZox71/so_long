@@ -6,34 +6,52 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 15:30:06 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/19 14:43:12 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/21 14:51:46 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "MacroLibX/includes/mlx.h"
 #include "so_long.h"
 
-void	ft_putplayer(t_window *win)
-{
-	ft_putimg(win->p_coords->x, win->p_coords->y, win, P_PNG);
-}
-
-void	ft_putimg(size_t x, size_t y, t_window *win, char *file_path)
+void	ft_alloc_img(t_window *win)
 {
 	int		img_x;
 	int		img_y;
-	size_t	img_xy;
 
-	img_x = 0;
 	img_y = 0;
-	img_xy = x + (y * win->map_size->x);
-	ft_printf("%d\n", img_xy);
-	if (win->img[img_xy])
-		mlx_destroy_image(win->mlx, win->img[img_xy]);
-	ft_putstr_fd(file_path, 1);
-	ft_putchar_fd('\n', 1);
-	win->img[img_xy] = mlx_png_file_to_image(win->mlx, file_path, &img_x, &img_y);
-	mlx_put_image_to_window(win->mlx, win->win, win->img[img_xy], x * img_x, y * img_y);
+	img_x = 0;
+	win->img->collectible = mlx_png_file_to_image(win->mlx,
+			C_PNG, &img_x, &img_y);
+	win->img->exit = mlx_png_file_to_image(win->mlx, E_PNG, &img_x, &img_y);
+	win->img->ground = mlx_png_file_to_image(win->mlx, G_PNG, &img_x, &img_y);
+	win->img->player = mlx_png_file_to_image(win->mlx, P_PNG, &img_x, &img_y);
+	win->img->wall = mlx_png_file_to_image(win->mlx, W_PNG, &img_x, &img_y);
+}
+
+void	ft_putimg(size_t x, size_t y, t_window *win, char c)
+{
+	if (c == 'E')
+	{
+		win->e_coords->x = x;
+		win->e_coords->y = y;
+		mlx_put_image_to_window(win->mlx, win->win,
+			win->img->exit, x * T_SIZE, y * T_SIZE);
+	}
+	else if (c == 'C')
+	{
+		mlx_put_image_to_window(win->mlx, win->win,
+			win->img->collectible, x * T_SIZE, y * T_SIZE);
+		win->c_count++;
+	}
+	else if (c == '0')
+		mlx_put_image_to_window(win->mlx, win->win,
+			win->img->ground, x * T_SIZE, y * T_SIZE);
+	else if (c == 'P')
+	{
+		win->p_coords->y = y;
+		win->p_coords->x = x;
+		mlx_put_image_to_window(win->mlx, win->win,
+			win->img->player, x * T_SIZE, y * T_SIZE);
+	}
 }
 
 void	ft_printmap(char **map, t_window *win)
@@ -49,27 +67,16 @@ void	ft_printmap(char **map, t_window *win)
 		while (map[y][x])
 		{
 			if (map[y][x] == '1')
-				ft_putimg(x, y, win, W_PNG);
+				mlx_put_image_to_window(win->mlx, win->win,
+					win->img->wall, x * T_SIZE, y * T_SIZE);
 			else if (map[y][x] == '0')
-				ft_putimg(x, y, win, G_PNG);
+				ft_putimg(x, y, win, map[y][x]);
 			else if (map[y][x] == 'C')
-			{
-				ft_putimg(x, y, win, C_PNG);
-				win->c_count++;
-			}
+				ft_putimg(x, y, win, map[y][x]);
 			else if (map[y][x] == 'E')
-			{
-				win->e_coords->x = x;
-				win->e_coords->y = y;
-				ft_putimg(x, y, win, E_PNG);
-			}
+				ft_putimg(x, y, win, map[y][x]);
 			else if (map[y][x] == 'P')
-			{
-				win->p_coords->y = y;
-				win->p_coords->x = x;
-				ft_putimg(x, y, win, P_PNG);
-			}
-
+				ft_putimg(x, y, win, map[y][x]);
 			x++;
 		}
 		y++;

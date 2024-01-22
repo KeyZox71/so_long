@@ -6,19 +6,23 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/08 13:13:18 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/19 14:30:23 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/19 17:14:11 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "so_long.h"
 
-size_t	ft_countline_fd(int fd)
+size_t	ft_countline_fd(char	*file_name)
 {
 	size_t	line_count;
 	ssize_t	rd;
 	char	*buf;
 	size_t	i;
+	int		fd;
 
+	fd = open(file_name, O_RDONLY);
+	if (fd < 1)
+		return (0);
 	i = 0;
 	line_count = 0;
 	buf = ft_calloc(1, 1);
@@ -31,6 +35,7 @@ size_t	ft_countline_fd(int fd)
 			line_count++;
 		i++;
 	}
+	close(fd);
 	free(buf);
 	return (line_count);
 }
@@ -43,13 +48,9 @@ char	**ft_read_map(char	*file_name)
 	size_t	ln_count;
 
 	i = 0;
-	fd = open(file_name, O_RDONLY);
-	if (fd < 1)
-	{
+	ln_count = ft_countline_fd(file_name);
+	if (ln_count == 0)
 		return (NULL);
-	}
-	ln_count = ft_countline_fd(fd);
-	close(fd);
 	fd = open(file_name, O_RDONLY);
 	map_read = ft_calloc(sizeof(char *), ln_count);
 	if (!map_read)

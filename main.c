@@ -6,126 +6,101 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:18:56 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/19 14:44:15 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/22 13:46:27 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "MacroLibX/includes/mlx.h"
-#include "printf/ft_printf.h"
 #include "so_long.h"
 
-void	ft_freeimg(t_window	*win)
+void	ft_freeimg(t_window *win)
 {
-	while (*win->img)
-	{
-		mlx_destroy_image(win, *win->img);
-		win->img++;
-	}
-	free(win->img);
-	return ;
+	mlx_destroy_image(win->mlx, win->img->collectible);
+	mlx_destroy_image(win->mlx, win->img->exit);
+	mlx_destroy_image(win->mlx, win->img->ground);
+	mlx_destroy_image(win->mlx, win->img->player);
+	mlx_destroy_image(win->mlx, win->img->wall);
+	free (win->img);
 }
 
-size_t	ft_sizemap(char	**map)
+
+void	ft_freemap(char	**map)
 {
 	size_t	i;
 
 	i = 0;
-	while (*map)
+	while (map[i] && i < ULONG_MAX)
 	{
-		map++;
+		// ft_printf("freed : %s\n", map[i]);
+		free(map[i]);
 		i++;
 	}
-	return (i);
-}
-
-void	ft_freemap(char	**map)
-{
-	while (*map)
-	{
-		free(*map);
-		map++;
-	}
-	free(map);
+	// free(map);
 }
 
 int	win_close(int event, void *param)
 {
+	t_window	*win;
+
+	win = (t_window *)param;
 	if (event == 0)
-		mlx_loop_end(param);
+		ft_exit(win);
 	return (0);
 }
 
 void	ft_exit(t_window *win)
 {
+	ft_freeimg(win);
 	mlx_destroy_window(win->mlx, win->win);
 	mlx_destroy_display(win->mlx);
 	ft_freemap(win->map);
-	ft_freeimg(win);
-	free(win->p_coords);
-	free(win->e_coords);
-	free(win);
-	exit (0);
+	// free(win->p_coords);
+	// free(win->e_coords);
+	// free(win);
+	exit (EXIT_SUCCESS);
 }
 
 int	main(int ac, char **av)
 {
 	t_window	*win;
 	char		**map;
-	void		**img;
-	t_coords	*map_size;
 
 	(void) ac;
-	(void) av;
 	map = NULL;
+	if (ac != 2)
+		ft_send_error("Invalid number of argument\n", map);
 	if (ft_valid_file_ext(av[1]) == 1)
 		ft_send_error("Invalid map file extension (not .ber)\n", map);
+	if (ft_check_file(av[1]) == 1)
+		ft_send_error("File cannot be opened or doesn't exist\n", map);
 	map = ft_read_map(av[1]);
 	if (!map)
-		return (0);
+		exit(EXIT_SUCCESS);
+	if (!map[0])
+		ft_send_error("Map is empty", map);
 	ft_check_map_error(map);
-	map_size = malloc(sizeof(t_coords));
-	if (!map_size)
-	{
-		ft_freemap(map);
-		return (0);
-	}
-	map_size->x = ft_strlen(map[0]);
-	map_size->y = ft_sizemap(map);
-	ft_printf("x: %d\n", map_size->x);
-	ft_printf("y: %d\n", map_size->y);
-	img = malloc((map_size->x * map_size->y) * sizeof(void *));
-	if (!img)
-	{
-		free(map_size);
-		ft_freemap(map);
-		return (0);
-	}
-	win = malloc(sizeof(map) + sizeof(t_window) + sizeof(img));
-	win->img = img;
+	win = malloc(sizeof(map) + sizeof(t_window));
 	if (!win)
 	{
 		ft_freemap(map);
 		return (0);
 	}
-	win->mlx = mlx_init();
-	if (!win->mlx)
-	{
-		// free map img win;
-		return (0);
-	}
-	win->win = mlx_new_window(win->mlx, 1600, 900, "so_fluffy");
-	if (!win->win)
-	{
-		// free map img win ; destroy mlx
-		return (0);
-	}
-	win->map = map;
-	win->map_size = map_size;
+	// protect all three
 	win->p_coords = malloc(sizeof(t_coords));
 	win->e_coords = malloc(sizeof(t_coords));
+	win->img = malloc(sizeof(t_img));
+	win->mlx = mlx_init();
+	if (!win->mlx)
+		// free map img win;
+		return (0);
+	win->win = mlx_new_window(win->mlx, 1600, 900, "so_fluffy");
+	if (!win->win)
+		// free map img win ; destroy mlx
+		return (0);
+	win->map = map;
 	win->mov_count = 0;
 	mlx_on_event(win->mlx, win->win, MLX_WINDOW_EVENT, win_close, win->mlx);
 	mlx_on_event(win->mlx, win->win, MLX_KEYDOWN, ft_key_event, win);
+	ft_alloc_img(win);
 	ft_printmap(win->map, win);
 	mlx_loop(win->mlx);
 	ft_exit(win);
