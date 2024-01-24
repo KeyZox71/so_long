@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/07 19:13:01 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/21 15:29:10 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/24 12:16:14 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ void	ft_move_up(t_window *win)
 		ft_putimg(win->p_coords->x, win->p_coords->y - 1, win, 'P');
 		win->c_count--;
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 	else if (win->p_coords->y == win->e_coords->y
 		&& win->e_coords->x == win->p_coords->x
@@ -29,6 +30,7 @@ void	ft_move_up(t_window *win)
 		ft_putimg(win->p_coords->x, win->p_coords->y, win, 'E');
 		ft_putimg(win->p_coords->x, win->p_coords->y - 1, win, 'P');
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 	else if (win->map[win->p_coords->y - 1][win->p_coords->x] == 'E'
 		&& win->c_count == 0)
@@ -41,6 +43,7 @@ void	ft_move_up(t_window *win)
 		ft_putimg(win->p_coords->x, win->p_coords->y, win, '0');
 		ft_putimg(win->p_coords->x, win->p_coords->y - 1, win, 'P');
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 }
 
@@ -53,6 +56,7 @@ void	ft_move_down(t_window *win)
 		ft_putimg(win->p_coords->x, win->p_coords->y + 1, win, 'P');
 		win->c_count--;
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 	else if (win->p_coords->y == win->e_coords->y
 		&& win->e_coords->x == win->p_coords->x
@@ -61,6 +65,7 @@ void	ft_move_down(t_window *win)
 		ft_putimg(win->p_coords->x, win->p_coords->y, win, 'E');
 		ft_putimg(win->p_coords->x, win->p_coords->y + 1, win, 'P');
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 	else if (win->map[win->p_coords->y + 1][win->p_coords->x] == 'E'
 		&& win->c_count == 0)
@@ -73,6 +78,7 @@ void	ft_move_down(t_window *win)
 		ft_putimg(win->p_coords->x, win->p_coords->y, win, '0');
 		ft_putimg(win->p_coords->x, win->p_coords->y + 1, win, 'P');
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 }
 
@@ -85,6 +91,7 @@ void	ft_move_left(t_window *win)
 		ft_putimg(win->p_coords->x - 1, win->p_coords->y, win, 'P');
 		win->c_count--;
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 	else if (win->p_coords->y == win->e_coords->y
 		&& win->e_coords->x == win->p_coords->x
@@ -93,6 +100,7 @@ void	ft_move_left(t_window *win)
 		ft_putimg(win->p_coords->x, win->p_coords->y, win, 'E');
 		ft_putimg(win->p_coords->x - 1, win->p_coords->y, win, 'P');
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 	else if (win->map[win->p_coords->y][win->p_coords->x - 1] == 'E'
 		&& win->c_count == 0)
@@ -105,6 +113,7 @@ void	ft_move_left(t_window *win)
 		ft_putimg(win->p_coords->x, win->p_coords->y, win, '0');
 		ft_putimg(win->p_coords->x - 1, win->p_coords->y, win, 'P');
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 }
 
@@ -117,6 +126,7 @@ void	ft_move_right(t_window *win)
 		ft_putimg(win->p_coords->x + 1, win->p_coords->y, win, 'P');
 		win->c_count--;
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 	else if (win->p_coords->y == win->e_coords->y
 		&& win->e_coords->x == win->p_coords->x
@@ -125,6 +135,7 @@ void	ft_move_right(t_window *win)
 		ft_putimg(win->p_coords->x, win->p_coords->y, win, 'E');
 		ft_putimg(win->p_coords->x + 1, win->p_coords->y, win, 'P');
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 	else if (win->map[win->p_coords->y][win->p_coords->x + 1] == 'E'
 		&& win->c_count == 0)
@@ -137,6 +148,7 @@ void	ft_move_right(t_window *win)
 		ft_putimg(win->p_coords->x, win->p_coords->y, win, '0');
 		ft_putimg(win->p_coords->x + 1, win->p_coords->y, win, 'P');
 		win->mov_count++;
+		ft_printf("Mouvement : %d\n", win->mov_count);
 	}
 }
 
@@ -155,6 +167,5 @@ int	ft_key_event(int key, void *param)
 		ft_move_left(win);
 	else if (key == 7 || key == 79)
 		ft_move_right(win);
-	ft_printf("Mouvement : %d\n", win->mov_count);
 	return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:19:42 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/21 15:42:52 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/24 12:15:45 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,8 +60,7 @@ int		ft_key_event(int key, void *param);
 
 void	ft_freemap(char	**map);
 int		check_wall(char **map, t_coords *player);
-size_t	ft_countline_fd(char *file_name);
-char	**ft_read_map(char	*file_name);
+char	**ft_read_map(char	*file_name, char	**map_read);
 
 char	ft_check_file(char	*file_name);
 void	ft_exit(t_window *win);
@@ -74,5 +73,6 @@ void	ft_alloc_img(t_window *win);
 char	ft_valid_file_ext(char *file_name);
 void	ft_send_error(char *msg, char **map);
 void	ft_check_map_error(char	**map);
+size_t	ft_mapsize(char	**map);
 
 #endif

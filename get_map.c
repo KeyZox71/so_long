@@ -6,65 +6,77 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/08 13:13:18 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/19 17:14:11 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/23 11:45:20 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "printf/ft_printf.h"
 #include "so_long.h"
+#include <stddef.h>
 
-size_t	ft_countline_fd(char	*file_name)
+size_t	ft_filesize(char *file_name)
 {
-	size_t	line_count;
+	size_t	i;
+	int		fd;
 	ssize_t	rd;
 	char	*buf;
-	size_t	i;
-	int		fd;
 
 	fd = open(file_name, O_RDONLY);
-	if (fd < 1)
+	buf = ft_calloc(1, 1);
+	if (!buf)
 		return (0);
 	i = 0;
-	line_count = 0;
-	buf = ft_calloc(1, 1);
-	while (i < ULONG_MAX)
+	while (buf && i < SIZE_MAX)
 	{
 		rd = read(fd, buf, 1);
-		if (rd == -1 || rd == 0)
+		if (rd <= 0)
 			break ;
-		else if (buf[0] == '\n')
-			line_count++;
 		i++;
 	}
-	close(fd);
 	free(buf);
-	return (line_count);
+	close(fd);
+	return (i);
 }
 
-char	**ft_read_map(char	*file_name)
+char	**ft_getmap(int fd, char **map_read, char *buf, char *tmp)
 {
-	char	**map_read;
-	int		fd;
+	ssize_t	rd;
 	size_t	i;
-	size_t	ln_count;
 
 	i = 0;
-	ln_count = ft_countline_fd(file_name);
-	if (ln_count == 0)
-		return (NULL);
-	fd = open(file_name, O_RDONLY);
-	map_read = ft_calloc(sizeof(char *), ln_count);
-	if (!map_read)
+	while (buf && i < SIZE_MAX)
 	{
-		close (fd);
-		return (NULL);
-	}
-	while (i < ULONG_MAX)
-	{
-		map_read[i] = get_next_line(fd);
-		if (map_read[i] == NULL)
+		rd = read(fd, buf, 1);
+		if (rd <= 0)
 			break ;
+		tmp[i] = buf[0];
 		i++;
 	}
 	close(fd);
+	tmp[i] = '\0';
+	map_read = ft_split(tmp, '\n');
+	return (map_read);
+}
+
+char	**ft_read_map(char	*file_name, char	**map_read)
+{
+	int		fd;
+	char	*tmp;
+	char	*buf;
+	size_t	filesize;
+
+	filesize = ft_filesize(file_name);
+	if (filesize == 0)
+		return (NULL);
+	tmp = ft_calloc(filesize + 1, 1);
+	if (!tmp)
+		return (NULL);
+	buf = ft_calloc(1, 1);
+	if (!buf)
+		return (NULL);
+	fd = open(file_name, O_RDONLY);
+	map_read = ft_getmap(fd, map_read, buf, tmp);
+	free(buf);
+	free(tmp);
 	return (map_read);
 }
