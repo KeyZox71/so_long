@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:19:42 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/24 12:15:45 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/26 16:15:23 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include "libft/libft.h"
 # include "get_next_line/get_next_line.h"
 # include "printf/ft_printf.h"
+
 # include <stddef.h>
 # include <unistd.h>
 # include <fcntl.h>
@@ -44,6 +45,13 @@ typedef struct s_img
 	void	*ground;
 }			t_img;
 
+typedef struct s_elemcount
+{
+	size_t	p_count;
+	size_t	c_count;
+	size_t	e_count;
+}			t_elemcount;
+
 typedef struct s_window
 {
 	void		*mlx;
@@ -67,12 +75,55 @@ void	ft_exit(t_window *win);
 
 void	ft_printmap(char **map, t_window *win);
 void	ft_putimg(size_t x, size_t y, t_window *win, char c);
-void	ft_check_map_error(char	**map);
 
 void	ft_alloc_img(t_window *win);
-char	ft_valid_file_ext(char *file_name);
-void	ft_send_error(char *msg, char **map);
-void	ft_check_map_error(char	**map);
 size_t	ft_mapsize(char	**map);
+
+// - Move Character -
+
+// move character
+void	ft_printmov(t_window *win);
+int		ft_key_event(int key, void *param);
+
+// move up
+void	ft_move_up(t_window *win);
+
+// move down
+void	ft_move_down(t_window *win);
+
+// move left
+void	ft_move_left(t_window *win);
+
+// move right
+void	ft_move_right(t_window *win);
+
+// - Check Error -
+
+// check file
+char	ft_check_file(char	*file_name);
+char	ft_valid_file_ext(char *file_name);
+char	ft_is_empty(char **map);
+
+//check map content
+char	ft_check_reselement(t_elemcount *count);
+char	ft_check_element(char **map, t_coords *p_coords, t_elemcount *count);
+void	ft_check_map_content(char **map, t_coords *p_coords);
+
+// check map error
+char	ft_checkcol(char **map, char c, unsigned short col);
+char	ft_is_rectangular(char **map);
+char	ft_valid_char(char **map);
+char	ft_checkline(char *map_line, char c);
+void	ft_check_map_error(char	**map);
+
+// check map state
+void	ft_flood(int x, int y, char	**map);
+char	ft_floodfill(char **map, t_coords *p_coords);
+char	ft_is_closed(char **map);
+void	ft_check_map_state(char **map, t_coords *p_coords);
+
+// check map utils
+void	ft_send_error(char *msg, char **map);
+char	ft_check_charset(char c, char *charset);
 
 #endif

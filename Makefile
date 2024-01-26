@@ -6,7 +6,7 @@
 #    By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/01 11:03:22 by adjoly            #+#    #+#              #
-#    Updated: 2024/01/19 13:41:58 by adjoly           ###   ########.fr        #
+#    Updated: 2024/01/26 16:16:13 by adjoly           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,9 +16,17 @@ CC = cc
 
 SRCS = main.c \
 		get_map.c \
-		ft_move_character.c \
 		print_map.c \
-		ft_check_map_error.c
+		map_error/ft_check_file.c \
+		map_error/ft_check_map_content.c \
+		map_error/ft_check_map_error.c \
+		map_error/ft_check_map_state.c \
+		map_error/ft_check_map_utils.c \
+		move_character/ft_move_character.c \
+		move_character/ft_move_down.c \
+		move_character/ft_move_up.c \
+		move_character/ft_move_left.c \
+		move_character/ft_move_right.c
 
 OBJS = $(SRCS:.c=.o)
 
