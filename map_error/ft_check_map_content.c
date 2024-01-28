@@ -6,20 +6,31 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/26 01:31:27 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/26 16:10:32 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/27 13:58:18 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../so_long.h"
+#include <stdlib.h>
 
 char	ft_check_reselement(t_elemcount *count)
 {
 	if (count->p_count != 1)
+	{
+		free(count);
 		return (1);
+	}
 	else if (count->e_count != 1)
+	{
+		free(count);
 		return (2);
+	}
 	else if (count->c_count < 1)
+	{
+		free(count);
 		return (3);
+	}
+	free(count);
 	return (0);
 }
 
@@ -57,23 +68,22 @@ void	ft_check_map_content(char **map, t_coords *p_coords)
 	char		check_result;
 	t_elemcount	*count;
 
-	count = malloc(sizeof(t_elemcount *));
+	count = malloc(sizeof(t_elemcount));
+	if (!count)
+		ft_send_error("Memory allocation failed\n", map);
 	check_result = ft_check_element(map, p_coords, count);
 	if (check_result == 1)
 	{
-		free(count);
 		free(p_coords);
 		ft_send_error("Invalid number of player\n", map);
 	}
 	if (check_result == 2)
 	{
-		free(count);
 		free(p_coords);
 		ft_send_error("Invalid number of exit\n", map);
 	}
 	if (check_result == 3)
 	{
-		free(count);
 		free(p_coords);
 		ft_send_error("Invalid number of collectible\n", map);
 	}

@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/08 13:13:18 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/23 11:45:20 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/27 15:45:48 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ char	**ft_getmap(int fd, char **map_read, char *buf, char *tmp)
 	return (map_read);
 }
 
-char	**ft_read_map(char	*file_name, char	**map_read)
+char	**ft_read_map(char *file_name, char **map_read)
 {
 	int		fd;
 	char	*tmp;

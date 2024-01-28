@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/26 14:29:02 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/26 16:10:23 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/28 18:22:49 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,5 +43,48 @@ char	ft_is_empty(char **map)
 {
 	if (map[0][0] == '\0')
 		return (1);
+	return (0);
+}
+
+void	ft_read_file_to_end(int fd)
+{
+	char	*gnl;
+	size_t	i;
+
+	i = 0;
+	while (i < SIZE_MAX)
+	{
+		gnl = get_next_line(fd);
+		if (!gnl)
+			return ;
+		free(gnl);
+	}
+	free(gnl);
+}
+
+char	ft_checknl(char	*filename)
+{
+	int		fd;
+	size_t	i;
+	char	*gnl;
+
+	i = 0;
+	fd = open(filename, O_RDONLY);
+	while (i < SIZE_MAX)
+	{
+		gnl = get_next_line(fd);
+		if (!gnl)
+			break ;
+		if (gnl[0] == '\n')
+		{
+			free(gnl);
+			ft_read_file_to_end(fd);
+			return (1);
+		}
+		free(gnl);
+		i++;
+	}
+	close (fd);
+	free(gnl);
 	return (0);
 }

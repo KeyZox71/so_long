@@ -12,11 +12,11 @@
 *.ilk
 *.pdb
 *.exe
-.gdb_history
+*vgcore
+*.gdb_history
 .vs/
 .xmake/
 .cache/
 objs/
 build/
-example/.gdb_history
 example/Test

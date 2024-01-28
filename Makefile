@@ -6,7 +6,7 @@
 #    By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/01 11:03:22 by adjoly            #+#    #+#              #
-#    Updated: 2024/01/26 16:16:13 by adjoly           ###   ########.fr        #
+#    Updated: 2024/01/28 18:22:26 by adjoly           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,6 +17,8 @@ CC = cc
 SRCS = main.c \
 		get_map.c \
 		print_map.c \
+		ft_utils.c \
+		ft_utils2.c \
 		map_error/ft_check_file.c \
 		map_error/ft_check_map_content.c \
 		map_error/ft_check_map_error.c \

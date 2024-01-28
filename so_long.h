@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:19:42 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/26 16:15:23 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/28 18:24:35 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 # include <unistd.h>
 # include <fcntl.h>
 # include <stdlib.h>
+# include <limits.h>
 
 # define P_PNG "assets/player.png"
 # define G_PNG "assets/ground.png"
@@ -64,20 +65,30 @@ typedef struct s_window
 	t_img		*img;
 }				t_window;
 
-int		ft_key_event(int key, void *param);
+// - Main -
 
+// - Utils -
+
+void	ft_freeimg(t_window *win);
+size_t	ft_mapsize(char	**map);
 void	ft_freemap(char	**map);
-int		check_wall(char **map, t_coords *player);
-char	**ft_read_map(char	*file_name, char	**map_read);
-
-char	ft_check_file(char	*file_name);
+int		win_close(int event, void *param);
+int		win_close(int event, void *param);
 void	ft_exit(t_window *win);
+void	ft_clear_alloc(t_window *win, char **map);
+void	ft_destroy_display(t_window *win, char **map);
 
-void	ft_printmap(char **map, t_window *win);
-void	ft_putimg(size_t x, size_t y, t_window *win, char c);
+// - Get Map -
+
+size_t	ft_filesize(char *file_name);
+char	**ft_getmap(int fd, char **map_read, char *buf, char *tmp);
+char	**ft_read_map(char *file_name, char **map_read);
+
+// - Print Map -
 
 void	ft_alloc_img(t_window *win);
-size_t	ft_mapsize(char	**map);
+void	ft_putimg(unsigned short x, unsigned short y, t_window *win, char c);
+void	ft_printmap(char **map, t_window *win);
 
 // - Move Character -
 
@@ -103,6 +114,7 @@ void	ft_move_right(t_window *win);
 char	ft_check_file(char	*file_name);
 char	ft_valid_file_ext(char *file_name);
 char	ft_is_empty(char **map);
+char	ft_checknl(char	*filename);
 
 //check map content
 char	ft_check_reselement(t_elemcount *count);

@@ -6,11 +6,12 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 15:30:06 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/21 14:51:46 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/27 15:43:36 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "so_long.h"
+#include <limits.h>
 
 void	ft_alloc_img(t_window *win)
 {
@@ -27,7 +28,7 @@ void	ft_alloc_img(t_window *win)
 	win->img->wall = mlx_png_file_to_image(win->mlx, W_PNG, &img_x, &img_y);
 }
 
-void	ft_putimg(size_t x, size_t y, t_window *win, char c)
+void	ft_putimg(unsigned short x, unsigned short y, t_window *win, char c)
 {
 	if (c == 'E')
 	{
@@ -56,12 +57,12 @@ void	ft_putimg(size_t x, size_t y, t_window *win, char c)
 
 void	ft_printmap(char **map, t_window *win)
 {
-	size_t	x;
-	size_t	y;
+	unsigned short	x;
+	unsigned short	y;
 
 	y = 0;
 	win->c_count = 0;
-	while (map[y] != NULL && y < ULONG_MAX)
+	while (map[y] != NULL && y < USHRT_MAX)
 	{
 		x = 0;
 		while (map[y][x])
