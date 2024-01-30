@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/26 14:29:02 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/28 18:22:49 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/30 08:15:50 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,13 +37,6 @@ char	ft_valid_file_ext(char *file_name)
 		&& file_name[file_len - 2] == 'b' && file_name[file_len - 3] == '.')
 		return (0);
 	return (1);
-}
-
-char	ft_is_empty(char **map)
-{
-	if (map[0][0] == '\0')
-		return (1);
-	return (0);
 }
 
 void	ft_read_file_to_end(int fd)

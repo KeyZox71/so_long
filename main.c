@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:18:56 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/28 18:28:06 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/30 08:15:11 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ char	**ft_map_setup(char **map, char **av)
 {
 	map = ft_read_map(av[1], map);
 	if (!map)
-		exit(EXIT_SUCCESS);
+		ft_send_error("Map is empty or map read failed\n", map);
 	if (!map[0])
 		ft_send_error("Map is empty\n", map);
 	ft_check_map_error(map);

@@ -6,7 +6,7 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/06 16:19:42 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/28 18:24:35 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/30 08:08:38 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,8 +64,6 @@ typedef struct s_window
 	size_t		mov_count;
 	t_img		*img;
 }				t_window;
-
-// - Main -
 
 // - Utils -
 

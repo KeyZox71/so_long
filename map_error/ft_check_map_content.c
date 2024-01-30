@@ -6,12 +6,11 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/26 01:31:27 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/27 13:58:18 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/30 08:16:46 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../so_long.h"
-#include <stdlib.h>
 
 char	ft_check_reselement(t_elemcount *count)
 {

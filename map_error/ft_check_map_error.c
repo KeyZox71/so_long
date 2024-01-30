@@ -6,13 +6,11 @@
 /*   By: adjoly <adjoly@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 10:17:52 by adjoly            #+#    #+#             */
-/*   Updated: 2024/01/28 15:18:38 by adjoly           ###   ########.fr       */
+/*   Updated: 2024/01/30 08:15:43 by adjoly           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../so_long.h"
-#include <stddef.h>
-#include <unistd.h>
 
 char	ft_checkcol(char **map, char c, unsigned short col)
 {
@@ -84,11 +82,6 @@ void	ft_check_map_error(char	**map)
 	p_coords = malloc(sizeof(t_coords));
 	if (!p_coords)
 		ft_send_error("Memory allocation failed\n", map);
-	if (ft_is_empty(map) == 1)
-	{
-		free(p_coords);
-		ft_send_error("Map is empty", map);
-	}
 	if (ft_valid_char(map) == 1)
 	{
 		free(p_coords);
